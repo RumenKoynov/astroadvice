@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+# Build outputs
+dist/
+build/
+# System files
+.DS_Store
+Thumbs.db
+# Env files (keep only the example)
+.env
+.env.*
+!.env.example
+# React Native specifics
+ios/Pods/
+android/.gradle/
+android/app/build/
+*.keystore
+*.jks
