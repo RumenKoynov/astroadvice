@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Switch,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@react-navigation/native';
 import { useUser } from '../context/UserContext';
@@ -43,6 +44,7 @@ export default function SettingsScreen({ navigation }) {
   const onChangeLang = async (code) => {
     try {
       await i18n.changeLanguage(code);
+      await AsyncStorage.setItem('uiLanguage', code);
       user.setLanguage(code);
     } catch (e) {
       // no-op; i18n will keep previous language

@@ -1,5 +1,5 @@
 // src/screens/StandartZodiacScreen.js
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -57,11 +57,17 @@ export default function StandartZodiacScreen({ navigation }) {
   }, [dob]);
 
   const todayKey = useMemo(() => DATE_KEY(), []);
-  const saved = user?.daily?.advice?.[todayKey] || null;
+  const savedRaw = user?.daily?.advice?.[todayKey] || null;
+  const saved = savedRaw && savedRaw.lang === i18n.language ? savedRaw : null;
 
   const [advice, setAdvice] = useState(saved?.text || '');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    setAdvice(saved?.text || '');
+    setErrorMsg('');
+  }, [saved?.text, i18n.language]);
 
   const isLocked = !BYPASS_DAILY_ZODIAC_LIMIT && !!saved;
 
@@ -86,7 +92,7 @@ export default function StandartZodiacScreen({ navigation }) {
       const text = data?.advice || '';
       setAdvice(text);
       // save for today (locks until tomorrow)
-      user.setDaily(todayKey, 'advice', { sign, text });
+      user.setDaily(todayKey, 'advice', { sign, text, lang: i18n.language });
     } catch (e) {
       setErrorMsg(e?.message || 'Failed to fetch advice');
     } finally {

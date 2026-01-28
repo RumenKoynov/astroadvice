@@ -29,7 +29,8 @@ export default function TarotScreen({ navigation }) {
   const user = useUser();
 
   const todayKey = useMemo(() => DATE_KEY(), []);
-  const savedToday = user?.daily?.tarotSingle?.[todayKey] || null;
+  const savedRaw = user?.daily?.tarotSingle?.[todayKey] || null;
+  const savedToday = savedRaw && savedRaw.lang === i18n.language ? savedRaw : null;
   const locked = !BYPASS_DAILY_SINGLE_LIMIT && !!savedToday;
 
   const [card, setCard] = useState(savedToday?.card || null);
@@ -50,6 +51,17 @@ export default function TarotScreen({ navigation }) {
     ]).start();
   };
 
+  useEffect(() => {
+    if (locked && savedToday?.card) {
+      setCard(savedToday.card);
+      setPhase('locked');
+    } else {
+      setCard(null);
+      setPhase('idle');
+    }
+    setErrorMsg('');
+  }, [locked, savedToday?.card, i18n.language]);
+
   const drawCard = async () => {
     setErrorMsg('');
     setLoading(true);
@@ -62,7 +74,7 @@ export default function TarotScreen({ navigation }) {
       setPhase('showing');
       animateIn();
       // Save for today (locks until tomorrow)
-      user.setDaily(todayKey, 'tarotSingle', { card: res || null });
+      user.setDaily(todayKey, 'tarotSingle', { card: res || null, lang: i18n.language });
     } catch (e) {
       setErrorMsg(e?.message || 'Failed to draw a card');
     } finally {
@@ -88,7 +100,7 @@ export default function TarotScreen({ navigation }) {
   if (phase === 'locked') {
     return (
       <ImageBackground
-        source={require('../../assets/images/lanterns-bg.jpg')}
+        source={require('../../assets/images/single-tarot-background.jpg')}
         style={styles.bg}
         resizeMode="cover"
       >

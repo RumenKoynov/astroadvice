@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, ActivityIndicator, StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import { navigationRef } from './src/utils/nav';
 
 // Initialize i18n resources once
 import './src/i18n';
@@ -26,7 +27,7 @@ function ThemedNav() {
   return (
     <>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      <NavigationContainer theme={navTheme}>
+      <NavigationContainer ref={navigationRef}>
         <AppNavigator />
       </NavigationContainer>
     </>

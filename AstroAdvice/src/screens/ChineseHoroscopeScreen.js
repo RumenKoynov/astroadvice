@@ -17,9 +17,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useUser } from '../context/UserContext';
 import { apiFetch } from '../services/api';
-import {
-  BYPASS_DAILY_CHINESE_LIMIT,
-} from '../config/featureFlags'; // <- per your note
+import { BYPASS_DAILY_CHINESE_LIMIT } from '../config/featureFlags';
 
 const DATE_KEY = () => new Date().toISOString().slice(0, 10);
 
@@ -28,17 +26,18 @@ export default function ChineseHoroscopeScreen({ navigation }) {
   const { t, i18n } = useTranslation('common');
   const user = useUser();
 
-  const sign = (user?.chineseSign || '').toLowerCase();     // e.g., 'rat'
-  const element = (user?.chineseElement || '').toLowerCase(); // e.g., 'water'
+  const sign = (user?.chineseSign || '').toLowerCase();
+  const element = (user?.chineseElement || '').toLowerCase();
+
   const todayKey = useMemo(() => DATE_KEY(), []);
-  const savedToday = user?.daily?.chineseHoroscope?.[todayKey] || null;
+  const savedRaw = user?.daily?.chineseHoroscope?.[todayKey] || null;
+  const savedToday = savedRaw && savedRaw.lang === i18n.language ? savedRaw : null;
   const locked = !BYPASS_DAILY_CHINESE_LIMIT && !!savedToday;
 
   // phases: 'loading' | 'sign' | 'element' | 'horoscope' | 'locked' | 'error'
   const [phase, setPhase] = useState(locked ? 'locked' : 'loading');
-
-  const [signData, setSignData] = useState(null);       // { name:{}, desc:{}, imageUrl }
-  const [elemData, setElemData] = useState(null);       // { name:{}, desc:{}, imageUrl }
+  const [signData, setSignData] = useState(null); // { name, desc, imageUrl }
+  const [elemData, setElemData] = useState(null); // { name, desc, imageUrl }
   const [horoscope, setHoroscope] = useState(savedToday?.horoscope || '');
   const [err, setErr] = useState('');
 
@@ -46,7 +45,123 @@ export default function ChineseHoroscopeScreen({ navigation }) {
   const fadeSign = useRef(new Animated.Value(0)).current;
   const fadeElem = useRef(new Animated.Value(0)).current;
 
-  // Early exit: LOCKED VIEW
+  useEffect(() => {
+    if (locked) {
+      setPhase('locked');
+      setHoroscope(savedToday?.horoscope || '');
+    } else if (phase === 'locked') {
+      setPhase('loading');
+    }
+    setErr('');
+  }, [locked, savedToday?.horoscope, phase]);
+
+  // Load sign data on entry
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        if (!sign) {
+          setErr(t('set_profile_first') || 'Please set your profile first.');
+          setPhase('error');
+          return;
+        }
+        setErr('');
+        setPhase('loading');
+        setSignData(null);
+        setElemData(null);
+        setHoroscope('');
+
+        const s = await apiFetch(
+          `/chinese/${encodeURIComponent(sign)}?lang=${encodeURIComponent(i18n.language)}`,
+          'GET'
+        );
+        if (!active) return;
+        setSignData(s);
+        if (s?.imageUrl) {
+          try { await Image.prefetch(s.imageUrl); } catch {}
+        }
+        fadeSign.setValue(0);
+        Animated.timing(fadeSign, {
+          toValue: 1,
+          duration: 600,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }).start(() => {
+          if (active) setPhase('sign');
+        });
+      } catch (e) {
+        if (!active) return;
+        setErr(e?.message || 'Failed to load sign');
+        setPhase('error');
+      }
+    })();
+
+    return () => { active = false; };
+  }, [sign, i18n.language, fadeSign, t]);
+
+  const onRevealElement = async () => {
+    if (!sign || !element) {
+      setErr(t('set_profile_first') || 'Please set your profile first.');
+      return;
+    }
+    try {
+      setErr('');
+      const slug = `${sign}-${element}`;
+      const d = await apiFetch(
+        `/chinese/${encodeURIComponent(slug)}?lang=${encodeURIComponent(i18n.language)}`,
+        'GET'
+      );
+      setElemData(d);
+      if (d?.imageUrl) {
+        try { await Image.prefetch(d.imageUrl); } catch {}
+      }
+      fadeElem.setValue(0);
+      Animated.timing(fadeElem, {
+        toValue: 1,
+        duration: 650,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }).start(() => setPhase('element'));
+    } catch (e) {
+      setErr(e?.message || 'Failed to reveal element');
+    }
+  };
+
+  const onGetTodaysHoroscope = async () => {
+    if (!sign || !element) {
+      setErr(t('set_profile_first') || 'Please set your profile first.');
+      return;
+    }
+    try {
+      setErr('');
+      const data = await apiFetch(
+        `/chinese/daily?sign=${encodeURIComponent(sign)}&element=${encodeURIComponent(
+          element
+        )}&lang=${encodeURIComponent(i18n.language)}`,
+        'GET'
+      );
+      const text = data?.horoscope || '';
+      if (!text) {
+        setErr('Failed to get horoscope');
+        return;
+      }
+      setHoroscope(text);
+
+      const snapshot = {
+        slug: `${sign}-${element}`,
+        name: elemData?.name || signData?.name || '',
+        desc: elemData?.desc || signData?.desc || '',
+        imageUrl: elemData?.imageUrl || signData?.imageUrl || '',
+        horoscope: text,
+        lang: i18n.language,
+      };
+      user.setDaily(todayKey, 'chineseHoroscope', snapshot);
+      setPhase('horoscope');
+    } catch (e) {
+      setErr(e?.message || 'Failed to get horoscope');
+    }
+  };
+
   if (phase === 'locked') {
     return (
       <ImageBackground
@@ -75,9 +190,7 @@ export default function ChineseHoroscopeScreen({ navigation }) {
               )}
 
               {!!savedToday?.name && (
-                <Text style={styles.titleText}>
-                  {savedToday.name}
-                </Text>
+                <Text style={styles.titleText}>{savedToday.name}</Text>
               )}
 
               {!!savedToday?.desc && (
@@ -108,103 +221,6 @@ export default function ChineseHoroscopeScreen({ navigation }) {
     );
   }
 
-  // Flow when NOT locked
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        if (!sign) {
-          setErr(t('set_profile_first') || 'Please set your profile first.');
-          setPhase('error');
-          return;
-        }
-        setErr('');
-        setPhase('loading');
-
-        // 1) Fetch SIGN data and fade in
-        const s = await apiFetch(`/chinese/${sign}`, 'GET');
-        if (!active) return;
-        setSignData(s);
-        // Preload image then animate
-        if (s?.imageUrl) {
-          try { await Image.prefetch(s.imageUrl); } catch {}
-        }
-        fadeSign.setValue(0);
-        Animated.timing(fadeSign, {
-          toValue: 1,
-          duration: 600,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }).start(() => {
-          if (active) setPhase('sign');
-        });
-      } catch (e) {
-        if (!active) return;
-        setErr(e?.message || 'Failed to load sign');
-        setPhase('error');
-      }
-    })();
-
-    return () => { active = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sign, i18n.language]);
-
-  const onRevealElement = async () => {
-    if (!sign || !element) return;
-    try {
-      setErr('');
-      // 2) Fetch ELEMENT (sign-element) and cross-fade
-      const slug = `${sign}-${element}`;
-      const d = await apiFetch(`/chinese/${slug}`, 'GET');
-      setElemData(d);
-
-      // Preload element image
-      if (d?.imageUrl) {
-        try { await Image.prefetch(d.imageUrl); } catch {}
-      }
-
-      // Cross-fade: show elem image, fade it in
-      fadeElem.setValue(0);
-      Animated.timing(fadeElem, {
-        toValue: 1,
-        duration: 650,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }).start(() => setPhase('element'));
-    } catch (e) {
-      setErr(e?.message || 'Failed to reveal element');
-    }
-  };
-
-  const onGetTodaysHoroscope = async () => {
-    if (!sign || !element) return;
-    try {
-      setErr('');
-      const data = await apiFetch(
-        `/chinese/daily?sign=${encodeURIComponent(sign)}&element=${encodeURIComponent(
-          element
-        )}&lang=${encodeURIComponent(i18n.language)}`,
-        'GET'
-      );
-      const text = data?.horoscope || '';
-      setHoroscope(text);
-
-      // Save daily snapshot for lock
-      const snapshot = {
-        slug: `${sign}-${element}`,
-        name: elemData?.name || signData?.name || '',
-        desc: elemData?.desc || signData?.desc || '',
-        imageUrl: elemData?.imageUrl || signData?.imageUrl || '',
-        horoscope: text,
-      };
-      user.setDaily(todayKey, 'chineseHoroscope', snapshot);
-
-      setPhase('horoscope');
-    } catch (e) {
-      setErr(e?.message || 'Failed to get horoscope');
-    }
-  };
-
   return (
     <ImageBackground
       source={require('../../assets/images/lanterns-bg.jpg')}
@@ -214,25 +230,29 @@ export default function ChineseHoroscopeScreen({ navigation }) {
       <View style={styles.overlay} />
       <SafeAreaView style={styles.safe}>
         <View style={styles.root}>
-          {/* Content */}
           <ScrollView
             style={{ flex: 1, width: '100%' }}
             contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
             showsVerticalScrollIndicator={false}
           >
-            {/* SIGN image (fades in first) */}
             {!!signData?.imageUrl && (
               <Animated.Image
                 source={{ uri: signData.imageUrl }}
-                style={[styles.mainImg, { opacity: elemData ? fadeSign.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [1, 0.15], // dim sign when element is revealed
-                }) : fadeSign }]}
+                style={[
+                  styles.mainImg,
+                  {
+                    opacity: elemData
+                      ? fadeSign.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [1, 0.15],
+                        })
+                      : fadeSign,
+                  },
+                ]}
                 resizeMode="contain"
               />
             )}
 
-            {/* ELEMENT image (cross-fades in on top) */}
             {!!elemData?.imageUrl && (
               <Animated.Image
                 source={{ uri: elemData.imageUrl }}
@@ -241,12 +261,10 @@ export default function ChineseHoroscopeScreen({ navigation }) {
               />
             )}
 
-            {/* Title */}
             <Text style={styles.titleText}>
               {(elemData?.name || signData?.name || '').toString()}
             </Text>
 
-            {/* Description (sign or element-specific when available) */}
             {!!(elemData?.desc || signData?.desc) && (
               <View style={styles.card}>
                 <Text style={styles.cardText}>
@@ -255,7 +273,6 @@ export default function ChineseHoroscopeScreen({ navigation }) {
               </View>
             )}
 
-            {/* Horoscope (after request) */}
             {!!horoscope && (
               <View style={styles.card}>
                 <Text style={styles.cardHeader}>
@@ -268,7 +285,6 @@ export default function ChineseHoroscopeScreen({ navigation }) {
             {!!err && <Text style={styles.errorText}>{err}</Text>}
           </ScrollView>
 
-          {/* Footer buttons */}
           <View style={styles.bottomBar}>
             {!elemData && (
               <ChineseButton
@@ -284,7 +300,7 @@ export default function ChineseHoroscopeScreen({ navigation }) {
               />
             )}
 
-            {(elemData && !!horoscope) && (
+            {elemData && !!horoscope && (
               <ChineseButton
                 label={t('back') || 'Back'}
                 onPress={() => navigation.goBack()}
@@ -297,7 +313,6 @@ export default function ChineseHoroscopeScreen({ navigation }) {
   );
 }
 
-/* --------- Chinese-styled button --------- */
 function ChineseButton({ label, onPress, disabled }) {
   return (
     <TouchableOpacity
@@ -312,7 +327,6 @@ function ChineseButton({ label, onPress, disabled }) {
   );
 }
 
-/* -------------------- Styles -------------------- */
 const styles = StyleSheet.create({
   bg: { flex: 1 },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.3)' },
@@ -387,16 +401,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
-  // Chinese-styled button
   cnBtn: {
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
     borderRadius: 26,
-    backgroundColor: '#7a0c0c', // deep red
+    backgroundColor: '#7a0c0c',
     borderWidth: 1,
-    borderColor: '#d6a63b',     // gold
+    borderColor: '#d6a63b',
     overflow: 'hidden',
   },
   cnBtnBorder: {
@@ -412,8 +425,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-
-
-
-
-

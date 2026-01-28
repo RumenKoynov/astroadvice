@@ -27,7 +27,8 @@ export default function ThreeTarotCardsScreen({ navigation }) {
   const user = useUser();
 
   const todayKey = useMemo(() => DATE_KEY(), []);
-  const savedToday = user?.daily?.tarotThree?.[todayKey] || null;
+  const savedRaw = user?.daily?.tarotThree?.[todayKey] || null;
+  const savedToday = savedRaw && savedRaw.lang === i18n.language ? savedRaw : null;
   const locked = !BYPASS_DAILY_READING_LIMIT && !!savedToday;
 
   // phases: 'locked' | 'loading' | 'revealing' | 'grid' | 'error'
@@ -50,6 +51,23 @@ export default function ThreeTarotCardsScreen({ navigation }) {
       Animated.timing(scale, { toValue: 1, duration: 450, easing: Easing.out(Easing.ease), useNativeDriver: true }),
     ]).start();
   };
+
+  useEffect(() => {
+    if (!locked) return;
+    setPhase('locked');
+    setCards(savedToday?.cards || []);
+    setReading(savedToday?.reading || '');
+  }, [locked, savedToday?.reading, savedToday?.cards]);
+
+  useEffect(() => {
+    if (locked) return;
+    setPhase('loading');
+    setCards([]);
+    setReading('');
+    setRevealIndex(-1);
+    setErrorMsg('');
+    setLoadingReading(false);
+  }, [locked, i18n.language]);
 
   const draw = async (activeRef) => {
     setPhase('loading');
@@ -108,7 +126,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
       const text = res?.reading || '';
       setReading(text);
       // Save snapshot for today → lock until tomorrow
-      user.setDaily(todayKey, 'tarotThree', { cards, reading: text });
+      user.setDaily(todayKey, 'tarotThree', { cards, reading: text, lang: i18n.language });
     } catch (e) {
       setErrorMsg(e?.message || 'Failed to generate reading');
     } finally {
@@ -140,7 +158,9 @@ export default function ThreeTarotCardsScreen({ navigation }) {
     );
   };
 
-  const GridScroll = () => (
+  const GridScroll = () => {
+    const imgH = (reading || loadingReading) ? IMG_H * 0.82 : IMG_H;
+    return (
     <ScrollView
       style={{ flex: 1, width: '100%' }}
       contentContainerStyle={{ paddingHorizontal: PANEL_PAD, paddingTop: 12, paddingBottom: 120 }} // space for footer button
@@ -150,7 +170,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
         <View style={styles.row}>
           {cards.slice(0, 2).map((c, i) => (
             <View key={c.id || i} style={styles.cell}>
-              <Image source={{ uri: c.imageUrl }} style={styles.cellImg} resizeMode="contain" />
+              <Image source={{ uri: c.imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
               <Text style={styles.cellLabel}>{i === 0 ? (t('past') || 'Past') : (t('present') || 'Present')}</Text>
               <Text style={styles.cellName} numberOfLines={1}>{c.name}</Text>
             </View>
@@ -158,7 +178,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
         </View>
         <View style={[styles.row, { justifyContent: 'center' }]}>
           <View style={styles.cell}>
-            <Image source={{ uri: cards[2].imageUrl }} style={styles.cellImg} resizeMode="contain" />
+            <Image source={{ uri: cards[2].imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
             <Text style={styles.cellLabel}>{t('future') || 'Future'}</Text>
             <Text style={styles.cellName} numberOfLines={1}>{cards[2].name}</Text>
           </View>
@@ -171,10 +191,12 @@ export default function ThreeTarotCardsScreen({ navigation }) {
         )}
       </View>
     </ScrollView>
-  );
+    );
+  };
 
   /* ---------- LOCKED VIEW ---------- */
   if (phase === 'locked') {
+    const imgH = savedToday?.reading ? IMG_H * 0.82 : IMG_H;
     return (
       <ImageBackground
         source={require('../../assets/images/three-tarot-background.jpg')}
@@ -197,7 +219,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
                 <View style={styles.row}>
                   {savedToday.cards?.slice(0, 2).map((c, i) => (
                     <View key={c.id || i} style={styles.cell}>
-                      <Image source={{ uri: c.imageUrl }} style={styles.cellImg} resizeMode="contain" />
+                      <Image source={{ uri: c.imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
                       <Text style={styles.cellLabel}>
                         {i === 0 ? (t('past') || 'Past') : (t('present') || 'Present')}
                       </Text>
@@ -207,7 +229,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
                 </View>
                 <View style={[styles.row, { justifyContent: 'center' }]}>
                   <View style={styles.cell}>
-                    <Image source={{ uri: savedToday.cards?.[2]?.imageUrl }} style={styles.cellImg} resizeMode="contain" />
+                    <Image source={{ uri: savedToday.cards?.[2]?.imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
                     <Text style={styles.cellLabel}>{t('future') || 'Future'}</Text>
                     <Text style={styles.cellName} numberOfLines={1}>{savedToday.cards?.[2]?.name}</Text>
                   </View>

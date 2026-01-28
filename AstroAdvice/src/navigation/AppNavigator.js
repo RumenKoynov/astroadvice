@@ -1,6 +1,6 @@
-// src/navigation/AppNavigator.js
+﻿// src/navigation/AppNavigator.js
 import React from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useUser } from '../context/UserContext';
@@ -32,7 +32,7 @@ export default function AppNavigator() {
   const complete = isProfileComplete(user);
 
   if (!complete) {
-    // 🔒 Onboarding stack — force users to complete Profile first
+    // ðŸ”’ Onboarding stack â€” force users to complete Profile first
     return (
       <Stack.Navigator
         screenOptions={{
@@ -56,7 +56,7 @@ export default function AppNavigator() {
     );
   }
 
-  // ✅ Main app stack
+  // âœ… Main app stack
   return (
     <Stack.Navigator
       initialRouteName="Home"
@@ -69,7 +69,21 @@ export default function AppNavigator() {
       <Stack.Screen
         name="Home"
         component={HomeScreen}
-        options={{ title: t('home_title') || 'AstroAdvice' }}
+        options={({ navigation }) => ({
+          title: t('home_title') || 'AstroAdvice',
+          headerRight: ({ tintColor }) => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Settings')}
+              style={styles.headerBtn}
+              accessibilityRole="button"
+              accessibilityLabel={t('settings') || 'Settings'}
+            >
+              <Text style={[styles.headerBtnText, tintColor ? { color: tintColor } : null]}>
+                {t('settings') || 'Settings'}
+              </Text>
+            </TouchableOpacity>
+          ),
+        })}
       />
       <Stack.Screen
         name="Profile"
@@ -106,10 +120,7 @@ export default function AppNavigator() {
   );
 }
 
-
-
-
-
-
-
-
+const styles = StyleSheet.create({
+  headerBtn: { paddingHorizontal: 10, paddingVertical: 6 },
+  headerBtnText: { fontSize: 14, fontWeight: '600' },
+});
