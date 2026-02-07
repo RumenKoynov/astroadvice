@@ -14,6 +14,7 @@ import { useTheme } from '@react-navigation/native';
 import { apiFetch } from '../services/api';
 import { useUser } from '../context/UserContext';
 import { BYPASS_DAILY_ZODIAC_LIMIT } from '../config/featureFlags'; // export const BYPASS_DAILY_ZODIAC_LIMIT = __DEV__;
+import { SIGN_ID_BY_EN } from '../i18n/zodiacMap';
 
 const DATE_KEY = () => new Date().toISOString().slice(0, 10);
 
@@ -59,20 +60,22 @@ export default function StandartZodiacScreen({ navigation }) {
   const todayKey = useMemo(() => DATE_KEY(), []);
   const savedRaw = user?.daily?.advice?.[todayKey] || null;
   const saved = savedRaw && savedRaw.lang === i18n.language ? savedRaw : null;
+  const effectiveSaved = BYPASS_DAILY_ZODIAC_LIMIT ? null : saved;
 
-  const [advice, setAdvice] = useState(saved?.text || '');
+  const [advice, setAdvice] = useState(effectiveSaved?.text || '');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    setAdvice(saved?.text || '');
+    setAdvice(effectiveSaved?.text || '');
     setErrorMsg('');
-  }, [saved?.text, i18n.language]);
+  }, [effectiveSaved?.text, i18n.language]);
 
   const isLocked = !BYPASS_DAILY_ZODIAC_LIMIT && !!saved;
 
   const bgSource = zodiacBg[sign] || require('../../assets/images/std-horoscope-bg.jpg');
-  const localizedSign = sign ? (t(sign) || sign) : '';
+  const signId = sign ? (SIGN_ID_BY_EN[sign] || sign.toLowerCase()) : '';
+  const localizedSign = signId ? (t(signId) || sign) : '';
 
   const fetchAdvice = async () => {
     if (!sign) {
@@ -140,7 +143,7 @@ export default function StandartZodiacScreen({ navigation }) {
 
           {/* Footer button */}
           <View style={styles.bottomBar}>
-            {(!isLocked && !advice) ? (
+            {(BYPASS_DAILY_ZODIAC_LIMIT || (!isLocked && !advice)) ? (
               <MysticButton
                 label={t('get_todays_advice') || "Get today's advice"}
                 onPress={fetchAdvice}

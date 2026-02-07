@@ -1,5 +1,5 @@
 // src/screens/SettingsScreen.js
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -8,23 +8,17 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
+  ImageBackground,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@react-navigation/native';
 import { useUser } from '../context/UserContext';
-
-
-import {
-  BYPASS_DAILY_ZODIAC_LIMIT,
-  BYPASS_DAILY_READING_LIMIT,
-  BYPASS_DAILY_CHINESE_LIMIT,
-} from '../config/featureFlags';
+import { DEV_OVERRIDE_KEY, setDeveloperMode } from '../config/featureFlags';
 
 export default function SettingsScreen({ navigation }) {
   const { t, i18n } = useTranslation('common');
-  const { colors } = useTheme();
   const user = useUser();
+  const [isDeveloper, setIsDeveloper] = useState(false);
 
   const langs = useMemo(
     () => [
@@ -51,21 +45,57 @@ export default function SettingsScreen({ navigation }) {
     }
   };
 
-  const isDark = user.theme === 'dark';
-  const toggleTheme = () => user.setTheme(isDark ? 'light' : 'dark');
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(DEV_OVERRIDE_KEY);
+        if (raw === null) {
+          setDeveloperMode(null);
+          setIsDeveloper(__DEV__);
+        } else {
+          const enabled = raw === '1';
+          setIsDeveloper(enabled);
+          setDeveloperMode(enabled);
+        }
+      } catch {
+        setDeveloperMode(null);
+        setIsDeveloper(__DEV__);
+      }
+    })();
+  }, []);
 
-  const clearToday = () => {
-    // Clears all “today” buckets; keep profile
-    user.clearDaily();
+  const toggleDeveloper = async (next) => {
+    const value = !!next;
+    setIsDeveloper(value);
+    setDeveloperMode(value);
+    try {
+      await AsyncStorage.setItem(DEV_OVERRIDE_KEY, value ? '1' : '0');
+    } catch {
+      // no-op
+    }
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
+    <ImageBackground
+      source={require('../../assets/images/home.jpg')}
+      style={styles.bg}
+      resizeMode="cover"
+    >
+      <View pointerEvents="none" style={styles.overlay} />
+      <SafeAreaView style={styles.safe}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Profile */}
+          <Section title={t('profile') || 'Profile'}>
+            <MysticButton
+              label={t('edit_profile') || 'Edit profile'}
+              onPress={() => navigation.navigate('Profile')}
+            />
+          </Section>
+
         {/* Language */}
         <Section title={t('language') || 'Language'}>
           <View style={styles.langGrid}>
@@ -90,35 +120,19 @@ export default function SettingsScreen({ navigation }) {
           </Text>
         </Section>
 
-        {/* Theme */}
-        <Section title={t('theme') || 'Theme'}>
+        {/* Debug */}
+        <Section title={t('developer') || 'Developer'}>
           <View style={styles.rowBetween}>
             <Text style={styles.itemTitle}>
-              {isDark ? (t('dark') || 'Dark') : (t('light') || 'Light')}
+              {t('is_developer') || 'is_developer'}
             </Text>
-            <Switch value={isDark} onValueChange={toggleTheme} />
+            <Switch
+              value={isDeveloper}
+              onValueChange={toggleDeveloper}
+            />
           </View>
-        </Section>
-
-        {/* Daily data */}
-        <Section title={t('daily_data') || 'Daily data'}>
-          <MysticButton
-            label={t('clear_saved_today') || "Clear saved today's content"}
-            onPress={clearToday}
-          />
           <Text style={styles.hintSmall}>
-            {t('daily_data_explain') ||
-              'Clears saved advice, tarot and Chinese horoscope for today.'}
-          </Text>
-        </Section>
-
-        {/* Dev flags (read-only) */}
-        <Section title="Developer flags (read-only)">
-          <FlagRow name="BYPASS_DAILY_ZODIAC_LIMIT" value={!!BYPASS_DAILY_ZODIAC_LIMIT} />
-          <FlagRow name="BYPASS_DAILY_READING_LIMIT" value={!!BYPASS_DAILY_READING_LIMIT} />
-          <FlagRow name="BYPASS_DAILY_CHINESE_LIMIT" value={!!BYPASS_DAILY_CHINESE_LIMIT} />
-          <Text style={styles.hintSmall}>
-            These are set in <Text style={styles.mono}>/src/sonfig/featureFlags.js</Text>.
+            {t('developer_debug_hint') || 'Enables debug bypasses for daily limits.'}
           </Text>
         </Section>
 
@@ -126,8 +140,9 @@ export default function SettingsScreen({ navigation }) {
         <View style={{ height: 8 }} />
         <MysticButton label={t('back') || 'Back'} onPress={() => navigation.goBack()} />
         <View style={{ height: 24 }} />
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
@@ -138,17 +153,6 @@ function Section({ title, children }) {
       <Text style={styles.sectionTitle}>{title}</Text>
       <View style={{ height: 6 }} />
       {children}
-    </View>
-  );
-}
-
-function FlagRow({ name, value }) {
-  return (
-    <View style={styles.rowBetween}>
-      <Text style={styles.flagName}>{name}</Text>
-      <Text style={[styles.flagVal, value ? styles.flagOn : styles.flagOff]}>
-        {value ? 'ON' : 'OFF'}
-      </Text>
     </View>
   );
 }
@@ -169,12 +173,14 @@ function MysticButton({ label, onPress, disabled }) {
 
 /* -------------------- Styles -------------------- */
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
+  bg: { flex: 1 },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.65)' },
+  safe: { flex: 1, backgroundColor: 'transparent' },
   scroll: { flex: 1 },
   content: { padding: 16, paddingBottom: 40 },
 
   section: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(0,0,0,0.55)',
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
@@ -217,18 +223,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   pillTextActive: { color: '#fff' },
-
-  // Dev flags
-  flagName: {
-    color: '#d9ccff',
-    fontSize: 13,
-  },
-  flagVal: {
-    fontWeight: '800',
-    letterSpacing: 0.4,
-  },
-  flagOn: { color: '#9effa7' },
-  flagOff: { color: '#ffbdbd' },
 
   hintSmall: {
     marginTop: 8,

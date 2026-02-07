@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   Dimensions,
   ScrollView,
+  Modal,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -29,7 +30,10 @@ export default function ThreeTarotCardsScreen({ navigation }) {
   const todayKey = useMemo(() => DATE_KEY(), []);
   const savedRaw = user?.daily?.tarotThree?.[todayKey] || null;
   const savedToday = savedRaw && savedRaw.lang === i18n.language ? savedRaw : null;
-  const locked = !BYPASS_DAILY_READING_LIMIT && !!savedToday;
+  const bypass = BYPASS_DAILY_READING_LIMIT;
+  const useSaved = !bypass && !!savedToday;
+  const hasReading = useSaved && !!savedToday?.reading?.trim();
+  const locked = hasReading;
 
   // phases: 'locked' | 'loading' | 'revealing' | 'grid' | 'error'
   const [phase, setPhase] = useState(locked ? 'locked' : 'loading');
@@ -37,6 +41,8 @@ export default function ThreeTarotCardsScreen({ navigation }) {
   const [reading, setReading] = useState(savedToday?.reading || '');
   const [errorMsg, setErrorMsg] = useState('');
   const [loadingReading, setLoadingReading] = useState(false);
+  const [previewCard, setPreviewCard] = useState(null);
+  const previewAnim = useRef(new Animated.Value(0)).current;
 
   // Reveal state (fullscreen one-by-one)
   const [revealIndex, setRevealIndex] = useState(-1);
@@ -53,21 +59,35 @@ export default function ThreeTarotCardsScreen({ navigation }) {
   };
 
   useEffect(() => {
-    if (!locked) return;
-    setPhase('locked');
-    setCards(savedToday?.cards || []);
-    setReading(savedToday?.reading || '');
-  }, [locked, savedToday?.reading, savedToday?.cards]);
+    if (locked) {
+      setPhase('locked');
+      setCards(savedToday?.cards || []);
+      setReading(savedToday?.reading || '');
+      setRevealIndex(-1);
+      setErrorMsg('');
+      setLoadingReading(false);
+      return;
+    }
+    if (useSaved) {
+      if (phase === 'revealing') return;
+      setPhase('grid');
+      setCards(savedToday?.cards || []);
+      setReading(savedToday?.reading || '');
+      setRevealIndex(-1);
+      setErrorMsg('');
+      setLoadingReading(false);
+    }
+  }, [locked, useSaved, savedToday?.reading, savedToday?.cards, i18n.language, phase]);
 
   useEffect(() => {
-    if (locked) return;
+    if (locked || useSaved) return;
     setPhase('loading');
     setCards([]);
     setReading('');
     setRevealIndex(-1);
     setErrorMsg('');
     setLoadingReading(false);
-  }, [locked, i18n.language]);
+  }, [locked, useSaved, i18n.language]);
 
   const draw = async (activeRef) => {
     setPhase('loading');
@@ -82,6 +102,10 @@ export default function ThreeTarotCardsScreen({ navigation }) {
       setCards(trio);
       setReading('');
       setPhase('revealing');
+      if (!bypass) {
+        // Save cards immediately to prevent re-draw before reveal
+        user.setDaily(todayKey, 'tarotThree', { cards: trio, reading: '', lang: i18n.language });
+      }
 
       // Reveal with EXACTLY 1.5s between starts
       const startReveal = (idx = 0) => {
@@ -105,12 +129,12 @@ export default function ThreeTarotCardsScreen({ navigation }) {
 
   // Kick off draw if not locked
   useEffect(() => {
-    if (locked) return;
+    if (locked || useSaved) return;
     const activeRef = { current: true };
     draw(activeRef);
     return () => { activeRef.current = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i18n.language]);
+  }, [i18n.language, locked, useSaved]);
 
   const onRevealTruth = async () => {
     if (cards.length !== 3) return;
@@ -125,7 +149,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
       const res = await apiFetch('/threetarotcards/reading', 'POST', payload);
       const text = res?.reading || '';
       setReading(text);
-      // Save snapshot for today → lock until tomorrow
+      // Save reading for today → lock until tomorrow
       user.setDaily(todayKey, 'tarotThree', { cards, reading: text, lang: i18n.language });
     } catch (e) {
       setErrorMsg(e?.message || 'Failed to generate reading');
@@ -135,6 +159,28 @@ export default function ThreeTarotCardsScreen({ navigation }) {
   };
 
   const showRevealBtn = phase === 'grid' && !locked && (!reading || reading.trim().length === 0);
+  const openPreview = (card) => {
+    if (!card) return;
+    setPreviewCard(card);
+    previewAnim.setValue(0);
+    Animated.timing(previewAnim, {
+      toValue: 1,
+      duration: 220,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+  };
+  const closePreview = () => {
+    if (!previewCard) return;
+    Animated.timing(previewAnim, {
+      toValue: 0,
+      duration: 180,
+      easing: Easing.in(Easing.ease),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) setPreviewCard(null);
+    });
+  };
 
   /* ---------- Sub-views ---------- */
   const FullscreenReveal = () => {
@@ -169,19 +215,28 @@ export default function ThreeTarotCardsScreen({ navigation }) {
       <View style={styles.gridWrap}>
         <View style={styles.row}>
           {cards.slice(0, 2).map((c, i) => (
-            <View key={c.id || i} style={styles.cell}>
+            <TouchableOpacity
+              key={c.id || i}
+              style={styles.cell}
+              activeOpacity={0.9}
+              onPress={() => openPreview(c)}
+            >
               <Image source={{ uri: c.imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
               <Text style={styles.cellLabel}>{i === 0 ? (t('past') || 'Past') : (t('present') || 'Present')}</Text>
               <Text style={styles.cellName} numberOfLines={1}>{c.name}</Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
         <View style={[styles.row, { justifyContent: 'center' }]}>
-          <View style={styles.cell}>
+          <TouchableOpacity
+            style={styles.cell}
+            activeOpacity={0.9}
+            onPress={() => openPreview(cards[2])}
+          >
             <Image source={{ uri: cards[2].imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
             <Text style={styles.cellLabel}>{t('future') || 'Future'}</Text>
             <Text style={styles.cellName} numberOfLines={1}>{cards[2].name}</Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {!!reading && (
@@ -206,6 +261,43 @@ export default function ThreeTarotCardsScreen({ navigation }) {
         <View pointerEvents="none" style={styles.overlay} />
         <SafeAreaView style={styles.safe}>
           <View style={styles.root}>
+            <Modal
+              visible={!!previewCard}
+              transparent
+              animationType="fade"
+              onRequestClose={closePreview}
+            >
+              <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={closePreview}>
+                <TouchableOpacity style={styles.modalSafe} activeOpacity={1} onPress={() => {}}>
+                  <SafeAreaView style={styles.modalSafeInner}>
+                    <TouchableOpacity style={styles.modalCloseBtn} onPress={closePreview} activeOpacity={0.8}>
+                      <Text style={styles.modalCloseText}>X</Text>
+                    </TouchableOpacity>
+                      {!!previewCard && (
+                        <Animated.View
+                          style={[
+                            styles.modalContent,
+                            {
+                              opacity: previewAnim,
+                              transform: [
+                                {
+                                  scale: previewAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [0.96, 1],
+                                  }),
+                                },
+                              ],
+                            },
+                          ]}
+                        >
+                          <Image source={{ uri: previewCard.imageUrl }} style={styles.modalImage} resizeMode="contain" />
+                          <Text style={styles.modalCardName} numberOfLines={1}>{previewCard.name}</Text>
+                        </Animated.View>
+                      )}
+                  </SafeAreaView>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            </Modal>
             <Text style={styles.banner}>
               {t('next_available_tomorrow') || 'Next Tarot reading available tomorrow'}
             </Text>
@@ -218,21 +310,30 @@ export default function ThreeTarotCardsScreen({ navigation }) {
               <View style={styles.gridWrap}>
                 <View style={styles.row}>
                   {savedToday.cards?.slice(0, 2).map((c, i) => (
-                    <View key={c.id || i} style={styles.cell}>
+                    <TouchableOpacity
+                      key={c.id || i}
+                      style={styles.cell}
+                      activeOpacity={0.9}
+                      onPress={() => openPreview(c)}
+                    >
                       <Image source={{ uri: c.imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
                       <Text style={styles.cellLabel}>
                         {i === 0 ? (t('past') || 'Past') : (t('present') || 'Present')}
                       </Text>
                       <Text style={styles.cellName} numberOfLines={1}>{c.name}</Text>
-                    </View>
+                    </TouchableOpacity>
                   ))}
                 </View>
                 <View style={[styles.row, { justifyContent: 'center' }]}>
-                  <View style={styles.cell}>
+                  <TouchableOpacity
+                    style={styles.cell}
+                    activeOpacity={0.9}
+                    onPress={() => openPreview(savedToday.cards?.[2])}
+                  >
                     <Image source={{ uri: savedToday.cards?.[2]?.imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
                     <Text style={styles.cellLabel}>{t('future') || 'Future'}</Text>
                     <Text style={styles.cellName} numberOfLines={1}>{savedToday.cards?.[2]?.name}</Text>
-                  </View>
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -267,9 +368,46 @@ export default function ThreeTarotCardsScreen({ navigation }) {
       <View pointerEvents="none" style={styles.overlay} />
       <SafeAreaView style={styles.safe}>
         <View style={styles.root}>
+          <Modal
+            visible={!!previewCard}
+            transparent
+            animationType="fade"
+            onRequestClose={closePreview}
+          >
+            <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={closePreview}>
+              <TouchableOpacity style={styles.modalSafe} activeOpacity={1} onPress={() => {}}>
+                <SafeAreaView style={styles.modalSafeInner}>
+                  <TouchableOpacity style={styles.modalCloseBtn} onPress={closePreview} activeOpacity={0.8}>
+                    <Text style={styles.modalCloseText}>X</Text>
+                  </TouchableOpacity>
+                    {!!previewCard && (
+                      <Animated.View
+                        style={[
+                          styles.modalContent,
+                          {
+                            opacity: previewAnim,
+                            transform: [
+                              {
+                                scale: previewAnim.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [0.96, 1],
+                                }),
+                              },
+                            ],
+                          },
+                        ]}
+                      >
+                        <Image source={{ uri: previewCard.imageUrl }} style={styles.modalImage} resizeMode="contain" />
+                        <Text style={styles.modalCardName} numberOfLines={1}>{previewCard.name}</Text>
+                      </Animated.View>
+                    )}
+                </SafeAreaView>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </Modal>
           <View style={[styles.main, phase !== 'grid' && styles.centered]}>
             {phase === 'loading' && (
-              <Text style={styles.hint}>{t('loading') || 'Loading...'}</Text>
+              <DrawingIndicator label={t('drawing_cards') || 'Drawing cards...'} />
             )}
 
             {phase === 'revealing' && <FullscreenReveal />}
@@ -327,6 +465,55 @@ function MysticButton({ label, onPress, disabled }) {
   );
 }
 
+/* ---------- Drawing Indicator ---------- */
+function DrawingIndicator({ label }) {
+  const spin = useRef(new Animated.Value(0)).current;
+  const pulse = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const spinAnim = Animated.loop(
+      Animated.timing(spin, {
+        toValue: 1,
+        duration: 1200,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    const pulseAnim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 700, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 700, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+      ])
+    );
+    spinAnim.start();
+    pulseAnim.start();
+    return () => {
+      spinAnim.stop();
+      pulseAnim.stop();
+    };
+  }, [spin, pulse]);
+
+  const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const glowScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] });
+  const glowOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0.7] });
+
+  return (
+    <View style={styles.loaderWrap}>
+      <View style={styles.loaderOrb}>
+        <Animated.View
+          style={[
+            styles.loaderGlow,
+            { opacity: glowOpacity, transform: [{ scale: glowScale }] },
+          ]}
+        />
+        <Animated.View style={[styles.loaderSpinner, { transform: [{ rotate }] }]} />
+        <View style={styles.loaderCore} />
+      </View>
+      <Text style={styles.loadingText}>{label}</Text>
+    </View>
+  );
+}
+
 /* ---------- Styles ---------- */
 const PANEL_PAD = 16;
 const GAP = 14;
@@ -348,6 +535,47 @@ const styles = StyleSheet.create({
   },
 
   hint: { color: '#fff', opacity: 0.9, textAlign: 'center' },
+  loadingText: {
+    marginTop: 10,
+    color: '#fff2d2',
+    opacity: 0.95,
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+  },
+  loaderWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loaderOrb: {
+    width: 56,
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loaderGlow: {
+    position: 'absolute',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,210,98,0.18)',
+  },
+  loaderSpinner: {
+    position: 'absolute',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 2,
+    borderColor: 'rgba(255,210,98,0.85)',
+    borderTopColor: 'rgba(255,210,98,0.08)',
+    borderRightColor: 'rgba(255,210,98,0.22)',
+  },
+  loaderCore: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#ffd262',
+  },
   errorText: { color: '#ffdede', textAlign: 'center', fontSize: 13, marginTop: 8 },
 
   /* Reveal fullscreen */
@@ -366,6 +594,56 @@ const styles = StyleSheet.create({
   cellName: { marginTop: 2, color: '#fff', fontSize: 12, opacity: 0.95 },
 
   /* Reading panel — outer ScrollView provides scrolling */
+  /* Card preview modal */
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+  },
+  modalSafe: {
+    flex: 1,
+    padding: 16,
+    justifyContent: 'center',
+  },
+  modalSafeInner: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  modalContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalImage: {
+    width: '100%',
+    height: SCREEN_H * 0.7,
+    borderRadius: 16,
+  },
+  modalCardName: {
+    marginTop: 10,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  modalCloseBtn: {
+    alignSelf: 'flex-end',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+    marginBottom: 12,
+  },
+  modalCloseText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 16,
+    lineHeight: 18,
+  },
+
+  /* Reading panel */
   readingWrap: {
     width: '100%',
     marginTop: 12,

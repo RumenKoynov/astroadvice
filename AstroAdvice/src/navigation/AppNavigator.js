@@ -1,6 +1,6 @@
 ﻿// src/navigation/AppNavigator.js
 import React from 'react';
-import { View, ActivityIndicator, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useUser } from '../context/UserContext';
@@ -39,6 +39,7 @@ export default function AppNavigator() {
           headerTitleAlign: 'center',
           animation: 'fade',
           gestureEnabled: false,
+          headerShown: false,
         }}
       >
         <Stack.Screen
@@ -64,26 +65,13 @@ export default function AppNavigator() {
         headerTitleAlign: 'center',
         animation: 'fade',
         headerBackTitleVisible: false,
+        headerShown: false,
       }}
     >
       <Stack.Screen
         name="Home"
         component={HomeScreen}
-        options={({ navigation }) => ({
-          title: t('home_title') || 'AstroAdvice',
-          headerRight: ({ tintColor }) => (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Settings')}
-              style={styles.headerBtn}
-              accessibilityRole="button"
-              accessibilityLabel={t('settings') || 'Settings'}
-            >
-              <Text style={[styles.headerBtnText, tintColor ? { color: tintColor } : null]}>
-                {t('settings') || 'Settings'}
-              </Text>
-            </TouchableOpacity>
-          ),
-        })}
+        options={{ title: t('home_title') || 'AstroAdvice' }}
       />
       <Stack.Screen
         name="Profile"
@@ -119,8 +107,3 @@ export default function AppNavigator() {
     </Stack.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  headerBtn: { paddingHorizontal: 10, paddingVertical: 6 },
-  headerBtnText: { fontSize: 14, fontWeight: '600' },
-});

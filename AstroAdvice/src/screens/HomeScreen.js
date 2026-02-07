@@ -20,6 +20,15 @@ export default function HomeScreen({ navigation }) {
         style={styles.overlay}
       />
 
+      <Pressable
+        onPress={() => navigation.navigate('Settings')}
+        style={styles.settingsBtn}
+        accessibilityRole="button"
+        accessibilityLabel={t('settings') || 'Settings'}
+      >
+        <Text style={styles.settingsBtnIcon}>⚙</Text>
+      </Pressable>
+
       <View style={styles.container}>
         <Text style={styles.title}>{t('home_title') || 'Choose your path'}</Text>
 
@@ -74,6 +83,30 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
     letterSpacing: 0.5,
+  },
+  settingsBtn: {
+    position: 'absolute',
+    top: 18,
+    left: 18,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+    zIndex: 2,
+  },
+  settingsBtnIcon: {
+    color: '#F3E5F5',
+    fontSize: 20,
+    fontWeight: '700',
   },
   card: {
     borderWidth: 1,

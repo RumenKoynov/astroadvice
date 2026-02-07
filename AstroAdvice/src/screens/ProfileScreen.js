@@ -146,7 +146,7 @@ export default function ProfileScreen({ navigation }) {
 
   return (
     <ImageBackground
-      source={require('../../assets/images/lanterns-bg.jpg')}
+      source={require('../../assets/images/home.jpg')}
       style={styles.bg}
       resizeMode="cover"
     >
@@ -160,7 +160,7 @@ export default function ProfileScreen({ navigation }) {
         >
           <Text style={styles.title}>{t('profile') || 'Profile'}</Text>
           <Text style={styles.subtitle}>
-            {t('profile_intro') || 'Tell the stars who you are to unlock your path.'}
+            {t('profile_intro') || 'Insert data'}
           </Text>
 
           {/* Sex */}
@@ -276,7 +276,7 @@ function MysticButton({ label, onPress, disabled }) {
 /* ---------- Styles ---------- */
 const styles = StyleSheet.create({
   bg: { flex: 1 },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.65)' },
   safe: { flex: 1 },
   scroll: { flex: 1 },
   content: { padding: 16, paddingBottom: 40 },

@@ -45,6 +45,38 @@ export default function ChineseHoroscopeScreen({ navigation }) {
   const fadeSign = useRef(new Animated.Value(0)).current;
   const fadeElem = useRef(new Animated.Value(0)).current;
 
+  const ELEMENT_ADJ_BG = {
+    wood: 'Дървено',
+    fire: 'Огнено',
+    earth: 'Земно',
+    metal: 'Метално',
+    water: 'Водно',
+  };
+  const getElementLabel = (elementKey) => {
+    if (!elementKey) return '';
+    if (i18n.language === 'bg') {
+      return ELEMENT_ADJ_BG[elementKey] || t(elementKey) || elementKey;
+    }
+    return t(elementKey) || elementKey;
+  };
+  const formatElementTitle = (signKey, elementKey) => {
+    const signLabel = signKey ? (t(signKey) || signKey) : '';
+    const elementLabel = getElementLabel(elementKey);
+    return [elementLabel, signLabel].filter(Boolean).join(' ').trim();
+  };
+  const signLabel = sign ? (t(sign) || sign) : '';
+  const elementTitle = formatElementTitle(sign, element);
+  const savedTitle = (() => {
+    const slug = savedToday?.slug || '';
+    if (slug.includes('-')) {
+      const [savedSign, savedElement] = slug.split('-');
+      if (savedSign && savedElement) {
+        return formatElementTitle(savedSign, savedElement);
+      }
+    }
+    return savedToday?.name || '';
+  })();
+
   useEffect(() => {
     if (locked) {
       setPhase('locked');
@@ -149,7 +181,7 @@ export default function ChineseHoroscopeScreen({ navigation }) {
 
       const snapshot = {
         slug: `${sign}-${element}`,
-        name: elemData?.name || signData?.name || '',
+        name: elementTitle || elemData?.name || signData?.name || '',
         desc: elemData?.desc || signData?.desc || '',
         imageUrl: elemData?.imageUrl || signData?.imageUrl || '',
         horoscope: text,
@@ -189,8 +221,8 @@ export default function ChineseHoroscopeScreen({ navigation }) {
                 />
               )}
 
-              {!!savedToday?.name && (
-                <Text style={styles.titleText}>{savedToday.name}</Text>
+              {!!savedTitle && (
+                <Text style={styles.titleText}>{savedTitle}</Text>
               )}
 
               {!!savedToday?.desc && (
@@ -262,7 +294,10 @@ export default function ChineseHoroscopeScreen({ navigation }) {
             )}
 
             <Text style={styles.titleText}>
-              {(elemData?.name || signData?.name || '').toString()}
+              {(elemData
+                ? (elementTitle || elemData?.name || signData?.name || '')
+                : (signLabel || signData?.name || '')
+              ).toString()}
             </Text>
 
             {!!(elemData?.desc || signData?.desc) && (

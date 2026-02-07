@@ -1,5 +1,6 @@
 // src/utils/api.js
-const API_BASE = 'http://192.168.0.14:3000'; 
+// Using adb reverse (tcp:3000 -> tcp:3000) lets the emulator reach localhost.
+const API_BASE = 'http://localhost:3000';
 // 👆 replace with your backend IP:port, e.g. http://192.168.1.5:3000
 
 export default async function api(endpoint, method = 'GET', body, token) {

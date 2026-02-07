@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  Modal,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@react-navigation/native';
@@ -31,16 +32,21 @@ export default function TarotScreen({ navigation }) {
   const todayKey = useMemo(() => DATE_KEY(), []);
   const savedRaw = user?.daily?.tarotSingle?.[todayKey] || null;
   const savedToday = savedRaw && savedRaw.lang === i18n.language ? savedRaw : null;
-  const locked = !BYPASS_DAILY_SINGLE_LIMIT && !!savedToday;
+  const hasSaved = !!savedToday;
+  const enforceLimit = !BYPASS_DAILY_SINGLE_LIMIT;
+  const locked = enforceLimit && hasSaved;
+  const showLocked = hasSaved;
 
   const [card, setCard] = useState(savedToday?.card || null);
   const [loading, setLoading] = useState(false);
-  const [phase, setPhase] = useState(locked ? 'locked' : 'idle'); // idle | showing | locked
+  const [phase, setPhase] = useState(showLocked ? 'locked' : 'idle'); // idle | showing | locked
   const [errorMsg, setErrorMsg] = useState('');
+  const [previewCard, setPreviewCard] = useState(null);
 
   // Smooth enter for image + text
   const fade = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.98)).current;
+  const previewAnim = useRef(new Animated.Value(0)).current;
 
   const animateIn = () => {
     fade.setValue(0);
@@ -50,9 +56,31 @@ export default function TarotScreen({ navigation }) {
       Animated.timing(scale, { toValue: 1, duration: 450, easing: Easing.out(Easing.ease), useNativeDriver: true }),
     ]).start();
   };
+  const openPreview = (nextCard) => {
+    if (!nextCard) return;
+    setPreviewCard(nextCard);
+    previewAnim.setValue(0);
+    Animated.timing(previewAnim, {
+      toValue: 1,
+      duration: 220,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+  };
+  const closePreview = () => {
+    if (!previewCard) return;
+    Animated.timing(previewAnim, {
+      toValue: 0,
+      duration: 180,
+      easing: Easing.in(Easing.ease),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) setPreviewCard(null);
+    });
+  };
 
   useEffect(() => {
-    if (locked && savedToday?.card) {
+    if (showLocked && savedToday?.card) {
       setCard(savedToday.card);
       setPhase('locked');
     } else {
@@ -60,9 +88,9 @@ export default function TarotScreen({ navigation }) {
       setPhase('idle');
     }
     setErrorMsg('');
-  }, [locked, savedToday?.card, i18n.language]);
+  }, [showLocked, savedToday?.card, i18n.language]);
 
-  const drawCard = async () => {
+  const drawCard = async ({ stayLocked = false } = {}) => {
     setErrorMsg('');
     setLoading(true);
     try {
@@ -71,8 +99,8 @@ export default function TarotScreen({ navigation }) {
         try { await Image.prefetch(res.imageUrl); } catch {}
       }
       setCard(res || null);
-      setPhase('showing');
-      animateIn();
+      setPhase(stayLocked ? 'locked' : 'showing');
+      if (!stayLocked) animateIn();
       // Save for today (locks until tomorrow)
       user.setDaily(todayKey, 'tarotSingle', { card: res || null, lang: i18n.language });
     } catch (e) {
@@ -83,10 +111,15 @@ export default function TarotScreen({ navigation }) {
   };
 
   const onPrimary = () => {
-    if (locked) {
-      // Back when locked
-      if (navigation?.canGoBack?.()) navigation.goBack();
-      else navigation.navigate('Home');
+    if (showLocked) {
+      if (locked) {
+        // Back when locked
+        if (navigation?.canGoBack?.()) navigation.goBack();
+        else navigation.navigate('Home');
+      } else {
+        // Dev bypass: keep locked layout, allow redraw
+        drawCard({ stayLocked: true });
+      }
     } else if (!card) {
       drawCard();
     } else {
@@ -107,6 +140,43 @@ export default function TarotScreen({ navigation }) {
         <View pointerEvents="none" style={styles.overlay} />
         <SafeAreaView style={[styles.safe, { backgroundColor: 'transparent' }]}>
           <View style={styles.root}>
+            <Modal
+              visible={!!previewCard}
+              transparent
+              animationType="fade"
+              onRequestClose={closePreview}
+            >
+              <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={closePreview}>
+                <TouchableOpacity style={styles.modalSafe} activeOpacity={1} onPress={() => {}}>
+                  <SafeAreaView style={styles.modalSafeInner}>
+                    <TouchableOpacity style={styles.modalCloseBtn} onPress={closePreview} activeOpacity={0.8}>
+                      <Text style={styles.modalCloseText}>X</Text>
+                    </TouchableOpacity>
+                    {!!previewCard && (
+                      <Animated.View
+                        style={[
+                          styles.modalContent,
+                          {
+                            opacity: previewAnim,
+                            transform: [
+                              {
+                                scale: previewAnim.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [0.96, 1],
+                                }),
+                              },
+                            ],
+                          },
+                        ]}
+                      >
+                        <Image source={{ uri: previewCard.imageUrl }} style={styles.modalImage} resizeMode="contain" />
+                        <Text style={styles.modalCardName} numberOfLines={1}>{previewCard.name}</Text>
+                      </Animated.View>
+                    )}
+                  </SafeAreaView>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            </Modal>
             <Text style={styles.banner}>
               {t('next_available_tomorrow') || 'Next single card available tomorrow'}
             </Text>
@@ -117,11 +187,13 @@ export default function TarotScreen({ navigation }) {
               showsVerticalScrollIndicator={false}
             >
               {!!savedToday?.card?.imageUrl && (
-                <Image
-                  source={{ uri: savedToday.card.imageUrl }}
-                  style={styles.cardImgLocked}
-                  resizeMode="contain"
-                />
+                <TouchableOpacity activeOpacity={0.9} onPress={() => openPreview(savedToday.card)}>
+                  <Image
+                    source={{ uri: savedToday.card.imageUrl }}
+                    style={styles.cardImgLocked}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
               )}
               {!!savedToday?.card?.name && (
                 <Text style={styles.cardTitle}>{savedToday.card.name}</Text>
@@ -135,8 +207,13 @@ export default function TarotScreen({ navigation }) {
 
             <View style={styles.bottomBar}>
               <MysticButton
-                label={t('back') || 'Back'}
-                onPress={() => (navigation?.canGoBack?.() ? navigation.goBack() : navigation.navigate('Home'))}
+                label={
+                  locked
+                    ? (t('back') || 'Back')
+                    : (t('draw_again') || 'Draw again')
+                }
+                onPress={onPrimary}
+                disabled={loading}
               />
             </View>
           </View>
@@ -148,24 +225,63 @@ export default function TarotScreen({ navigation }) {
   // NORMAL view
   return (
     <ImageBackground
-      source={require('../../assets/images/lanterns-bg.jpg')}
+      source={require('../../assets/images/single-tarot-background.jpg')}
       style={styles.bg}
       resizeMode="cover"
     >
       <View pointerEvents="none" style={styles.overlay} />
       <SafeAreaView style={[styles.safe, { backgroundColor: 'transparent' }]}>
         <View style={styles.root}>
+          <Modal
+            visible={!!previewCard}
+            transparent
+            animationType="fade"
+            onRequestClose={closePreview}
+          >
+            <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={closePreview}>
+              <TouchableOpacity style={styles.modalSafe} activeOpacity={1} onPress={() => {}}>
+                <SafeAreaView style={styles.modalSafeInner}>
+                  <TouchableOpacity style={styles.modalCloseBtn} onPress={closePreview} activeOpacity={0.8}>
+                    <Text style={styles.modalCloseText}>X</Text>
+                  </TouchableOpacity>
+                  {!!previewCard && (
+                    <Animated.View
+                      style={[
+                        styles.modalContent,
+                        {
+                          opacity: previewAnim,
+                          transform: [
+                            {
+                              scale: previewAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0.96, 1],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    >
+                      <Image source={{ uri: previewCard.imageUrl }} style={styles.modalImage} resizeMode="contain" />
+                      <Text style={styles.modalCardName} numberOfLines={1}>{previewCard.name}</Text>
+                    </Animated.View>
+                  )}
+                </SafeAreaView>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </Modal>
           {/* Image / content */}
           <View style={styles.centerArea}>
             {loading && <Text style={styles.loadingText}>{t('loading') || 'Loading...'}</Text>}
 
             {!loading && card && (
               <>
-                <Animated.Image
-                  source={{ uri: card.imageUrl }}
-                  style={[styles.cardImg, { opacity: fade, transform: [{ scale }] }]}
-                  resizeMode="contain"
-                />
+                <TouchableOpacity activeOpacity={0.9} onPress={() => openPreview(card)}>
+                  <Animated.Image
+                    source={{ uri: card.imageUrl }}
+                    style={[styles.cardImg, { opacity: fade, transform: [{ scale }] }]}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
                 <Animated.Text
                   style={[styles.cardTitle, { opacity: fade, transform: [{ scale }] }]}
                   numberOfLines={1}
@@ -263,6 +379,53 @@ const styles = StyleSheet.create({
     height: SCREEN_H * 0.45,
     borderRadius: 16,
   },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+  },
+  modalSafe: {
+    flex: 1,
+    padding: 16,
+    justifyContent: 'center',
+  },
+  modalSafeInner: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  modalContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalImage: {
+    width: '100%',
+    height: SCREEN_H * 0.7,
+    borderRadius: 16,
+  },
+  modalCardName: {
+    marginTop: 10,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  modalCloseBtn: {
+    alignSelf: 'flex-end',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+    marginBottom: 12,
+  },
+  modalCloseText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 16,
+    lineHeight: 18,
+  },
   cardTitle: {
     marginTop: 10,
     color: '#ffe7c2',
@@ -334,8 +497,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-
-
 
 
 
