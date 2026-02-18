@@ -1,4 +1,10 @@
 {
+  "name": "astroadvice-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
   "dependencies": {
     "@react-native-google-signin/google-signin": "^16.0.0",
     "axios": "^1.11.0",

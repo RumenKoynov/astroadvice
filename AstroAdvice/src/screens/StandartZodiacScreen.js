@@ -9,12 +9,15 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@react-navigation/native';
 import { apiFetch } from '../services/api';
 import { useUser } from '../context/UserContext';
-import { BYPASS_DAILY_ZODIAC_LIMIT } from '../config/featureFlags'; // export const BYPASS_DAILY_ZODIAC_LIMIT = __DEV__;
+import { BYPASS_DAILY_LIMITS } from '../config/featureFlags';
 import { SIGN_ID_BY_EN } from '../i18n/zodiacMap';
+import NativeAdCard from '../components/ads/NativeAdCard';
+import { NATIVE_DAILY_HOROSCOPE_AD_UNIT_ID } from '../config/admob';
 
 const DATE_KEY = () => new Date().toISOString().slice(0, 10);
 
@@ -38,6 +41,7 @@ export default function StandartZodiacScreen({ navigation }) {
   const { t, i18n } = useTranslation('common');
   const { colors } = useTheme();
   const user = useUser();
+  const insets = useSafeAreaInsets();
 
   const sign = user?.westernZodiac || '';
   const sex = user?.sex || '';
@@ -60,7 +64,7 @@ export default function StandartZodiacScreen({ navigation }) {
   const todayKey = useMemo(() => DATE_KEY(), []);
   const savedRaw = user?.daily?.advice?.[todayKey] || null;
   const saved = savedRaw && savedRaw.lang === i18n.language ? savedRaw : null;
-  const effectiveSaved = BYPASS_DAILY_ZODIAC_LIMIT ? null : saved;
+  const effectiveSaved = BYPASS_DAILY_LIMITS ? null : saved;
 
   const [advice, setAdvice] = useState(effectiveSaved?.text || '');
   const [loading, setLoading] = useState(false);
@@ -71,7 +75,7 @@ export default function StandartZodiacScreen({ navigation }) {
     setErrorMsg('');
   }, [effectiveSaved?.text, i18n.language]);
 
-  const isLocked = !BYPASS_DAILY_ZODIAC_LIMIT && !!saved;
+  const isLocked = !BYPASS_DAILY_LIMITS && !!saved;
 
   const bgSource = zodiacBg[sign] || require('../../assets/images/std-horoscope-bg.jpg');
   const signId = sign ? (SIGN_ID_BY_EN[sign] || sign.toLowerCase()) : '';
@@ -139,11 +143,13 @@ export default function StandartZodiacScreen({ navigation }) {
 
             {/* Error */}
             {!!errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
+
+            <NativeAdCard unitId={NATIVE_DAILY_HOROSCOPE_AD_UNIT_ID} />
           </ScrollView>
 
           {/* Footer button */}
-          <View style={styles.bottomBar}>
-            {(BYPASS_DAILY_ZODIAC_LIMIT || (!isLocked && !advice)) ? (
+          <View style={[styles.bottomBar, { paddingBottom: 20 + insets.bottom }]}>
+            {(BYPASS_DAILY_LIMITS || (!isLocked && !advice)) ? (
               <MysticButton
                 label={t('get_todays_advice') || "Get today's advice"}
                 onPress={fetchAdvice}

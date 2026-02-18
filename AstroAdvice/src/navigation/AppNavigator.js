@@ -13,6 +13,7 @@ import StandartZodiacScreen from '../screens/StandartZodiacScreen';
 import ChineseHoroscopeScreen from '../screens/ChineseHoroscopeScreen';
 import TarotScreen from '../screens/TarotScreen';
 import ThreeTarotCardsScreen from '../screens/ThreeTarotCardsScreen';
+import NumberScreen from '../screens/NumberScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -92,6 +93,11 @@ export default function AppNavigator() {
         name="ChineseHoroscope"
         component={ChineseHoroscopeScreen}
         options={{ title: t('chinese') || 'Chinese' }}
+      />
+      <Stack.Screen
+        name="Number"
+        component={NumberScreen}
+        options={{ title: t('daily_number_title') || 'Your daily number', headerShown: false }}
       />
       <Stack.Screen
         name="Tarot"

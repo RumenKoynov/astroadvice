@@ -1,0 +1,28 @@
+import { TestIds } from 'react-native-google-mobile-ads';
+import { is_dev } from './featureFlags';
+
+const USE_TEST_ADS = is_dev;
+
+// Replace these with your real AdMob IDs before release.
+export const ADMOB_APP_ID_ANDROID = 'ca-app-pub-3940256099942544~3347511713';
+export const ADMOB_APP_ID_IOS = 'ca-app-pub-3940256099942544~1458002511';
+
+const PROD_BANNER_ID = 'ca-app-pub-xxxxxxxxxxxxxxxx/xxxxxxxxxx';
+const PROD_NATIVE_ID = 'ca-app-pub-xxxxxxxxxxxxxxxx/xxxxxxxxxx';
+const PROD_REWARDED_ID = 'ca-app-pub-xxxxxxxxxxxxxxxx/xxxxxxxxxx';
+const PROD_INTERSTITIAL_ID = 'ca-app-pub-xxxxxxxxxxxxxxxx/xxxxxxxxxx';
+
+export const BANNER_HOME_AD_UNIT_ID = USE_TEST_ADS ? TestIds.BANNER : PROD_BANNER_ID;
+export const BANNER_SETTINGS_AD_UNIT_ID = USE_TEST_ADS ? TestIds.BANNER : PROD_BANNER_ID;
+export const BANNER_PROFILE_AD_UNIT_ID = USE_TEST_ADS ? TestIds.BANNER : PROD_BANNER_ID;
+export const BANNER_TAROT_AD_UNIT_ID = USE_TEST_ADS ? TestIds.BANNER : PROD_BANNER_ID;
+
+export const NATIVE_DAILY_HOROSCOPE_AD_UNIT_ID = USE_TEST_ADS ? TestIds.NATIVE : PROD_NATIVE_ID;
+export const NATIVE_THREE_TAROT_AD_UNIT_ID = USE_TEST_ADS ? TestIds.NATIVE : PROD_NATIVE_ID;
+
+export const REWARDED_NUMBER_AD_UNIT_ID = USE_TEST_ADS ? TestIds.REWARDED : PROD_REWARDED_ID;
+export const INTERSTITIAL_CHINESE_HOROSCOPE_AD_UNIT_ID = USE_TEST_ADS ? TestIds.INTERSTITIAL : PROD_INTERSTITIAL_ID;
+
+export const AD_REQUEST_OPTIONS = {
+  requestNonPersonalizedAdsOnly: true,
+};

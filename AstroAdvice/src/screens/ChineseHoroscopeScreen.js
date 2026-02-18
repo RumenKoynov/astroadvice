@@ -12,19 +12,31 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { AdEventType, InterstitialAd } from 'react-native-google-mobile-ads';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useUser } from '../context/UserContext';
 import { apiFetch } from '../services/api';
-import { BYPASS_DAILY_CHINESE_LIMIT } from '../config/featureFlags';
+import { BYPASS_DAILY_LIMITS } from '../config/featureFlags';
+import { AD_REQUEST_OPTIONS, INTERSTITIAL_CHINESE_HOROSCOPE_AD_UNIT_ID } from '../config/admob';
 
 const DATE_KEY = () => new Date().toISOString().slice(0, 10);
+const INTERSTITIAL_DAILY_KEY = 'astro_interstitial_chinese_v1';
 
 export default function ChineseHoroscopeScreen({ navigation }) {
   const { colors } = useTheme();
   const { t, i18n } = useTranslation('common');
   const user = useUser();
+  const insets = useSafeAreaInsets();
+  const interstitial = useMemo(
+    () => InterstitialAd.createForAdRequest(INTERSTITIAL_CHINESE_HOROSCOPE_AD_UNIT_ID, AD_REQUEST_OPTIONS),
+    []
+  );
+  const [interstitialLoaded, setInterstitialLoaded] = useState(false);
+  const interstitialShowingRef = useRef(false);
 
   const sign = (user?.chineseSign || '').toLowerCase();
   const element = (user?.chineseElement || '').toLowerCase();
@@ -32,7 +44,7 @@ export default function ChineseHoroscopeScreen({ navigation }) {
   const todayKey = useMemo(() => DATE_KEY(), []);
   const savedRaw = user?.daily?.chineseHoroscope?.[todayKey] || null;
   const savedToday = savedRaw && savedRaw.lang === i18n.language ? savedRaw : null;
-  const locked = !BYPASS_DAILY_CHINESE_LIMIT && !!savedToday;
+  const locked = !BYPASS_DAILY_LIMITS && !!savedToday;
 
   // phases: 'loading' | 'sign' | 'element' | 'horoscope' | 'locked' | 'error'
   const [phase, setPhase] = useState(locked ? 'locked' : 'loading');
@@ -86,6 +98,41 @@ export default function ChineseHoroscopeScreen({ navigation }) {
     }
     setErr('');
   }, [locked, savedToday?.horoscope, phase]);
+
+  useEffect(() => {
+    const unsubLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
+      setInterstitialLoaded(true);
+    });
+    const unsubClosed = interstitial.addAdEventListener(AdEventType.CLOSED, () => {
+      interstitialShowingRef.current = false;
+      setInterstitialLoaded(false);
+      interstitial.load();
+    });
+    const unsubError = interstitial.addAdEventListener(AdEventType.ERROR, () => {
+      interstitialShowingRef.current = false;
+      setInterstitialLoaded(false);
+      interstitial.load();
+    });
+    interstitial.load();
+    return () => {
+      unsubLoaded();
+      unsubClosed();
+      unsubError();
+    };
+  }, [interstitial]);
+
+  const maybeShowInterstitial = async () => {
+    if (!interstitialLoaded || interstitialShowingRef.current) return;
+    try {
+      const lastShown = await AsyncStorage.getItem(INTERSTITIAL_DAILY_KEY);
+      if (lastShown === todayKey) return;
+      interstitialShowingRef.current = true;
+      interstitial.show();
+      await AsyncStorage.setItem(INTERSTITIAL_DAILY_KEY, todayKey);
+    } catch {
+      interstitialShowingRef.current = false;
+    }
+  };
 
   // Load sign data on entry
   useEffect(() => {
@@ -166,6 +213,7 @@ export default function ChineseHoroscopeScreen({ navigation }) {
     }
     try {
       setErr('');
+      maybeShowInterstitial();
       const data = await apiFetch(
         `/chinese/daily?sign=${encodeURIComponent(sign)}&element=${encodeURIComponent(
           element
@@ -241,7 +289,7 @@ export default function ChineseHoroscopeScreen({ navigation }) {
               )}
             </ScrollView>
 
-            <View style={styles.bottomBar}>
+            <View style={[styles.bottomBar, { paddingBottom: 20 + insets.bottom }]}>
               <ChineseButton
                 label={t('back') || 'Back'}
                 onPress={() => navigation.navigate('Home')}
@@ -320,7 +368,7 @@ export default function ChineseHoroscopeScreen({ navigation }) {
             {!!err && <Text style={styles.errorText}>{err}</Text>}
           </ScrollView>
 
-          <View style={styles.bottomBar}>
+          <View style={[styles.bottomBar, { paddingBottom: 20 + insets.bottom }]}>
             {!elemData && (
               <ChineseButton
                 label={t('reveal_my_element') || 'Reveal my element'}

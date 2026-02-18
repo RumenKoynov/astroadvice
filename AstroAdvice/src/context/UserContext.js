@@ -19,6 +19,7 @@ export function UserProvider({ children }) {
       tarotSingle: {},            // {date: { card }}
       tarotThree: {},             // {date: { cards, reading }}
       chineseHoroscope: {},       // {date: { slug, horoscope }}
+      dailyNumber: {},            // {date: { number }}
     },
   });
   const [hydrated, setHydrated] = useState(false);
@@ -62,7 +63,10 @@ export function UserProvider({ children }) {
           [bucket]: { ...(prev.daily?.[bucket] || {}), [dateKey]: payload }
         }
       })),
-    clearDaily: () => patch(prev => ({ ...prev, daily: { advice:{}, tarotSingle:{}, tarotThree:{}, chineseHoroscope:{} } })),
+    clearDaily: () => patch(prev => ({
+      ...prev,
+      daily: { advice:{}, tarotSingle:{}, tarotThree:{}, chineseHoroscope:{}, dailyNumber:{} }
+    })),
   }), [state, hydrated, save, patch]);
 
   return <UserCtx.Provider value={value}>{children}</UserCtx.Provider>;

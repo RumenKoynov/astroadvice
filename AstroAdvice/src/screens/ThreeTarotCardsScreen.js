@@ -14,11 +14,14 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { apiFetch } from '../services/api';
 import { useUser } from '../context/UserContext';
-import { BYPASS_DAILY_READING_LIMIT } from '../config/featureFlags';
+import { BYPASS_DAILY_LIMITS } from '../config/featureFlags';
+import NativeAdCard from '../components/ads/NativeAdCard';
+import { NATIVE_THREE_TAROT_AD_UNIT_ID } from '../config/admob';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const DATE_KEY = () => new Date().toISOString().slice(0, 10); // YYYY-MM-DD
@@ -26,11 +29,12 @@ const DATE_KEY = () => new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 export default function ThreeTarotCardsScreen({ navigation }) {
   const { t, i18n } = useTranslation('common');
   const user = useUser();
+  const insets = useSafeAreaInsets();
 
   const todayKey = useMemo(() => DATE_KEY(), []);
   const savedRaw = user?.daily?.tarotThree?.[todayKey] || null;
   const savedToday = savedRaw && savedRaw.lang === i18n.language ? savedRaw : null;
-  const bypass = BYPASS_DAILY_READING_LIMIT;
+  const bypass = BYPASS_DAILY_LIMITS;
   const useSaved = !bypass && !!savedToday;
   const hasReading = useSaved && !!savedToday?.reading?.trim();
   const locked = hasReading;
@@ -43,6 +47,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
   const [loadingReading, setLoadingReading] = useState(false);
   const [previewCard, setPreviewCard] = useState(null);
   const previewAnim = useRef(new Animated.Value(0)).current;
+  const isActiveRef = useRef(true);
 
   // Reveal state (fullscreen one-by-one)
   const [revealIndex, setRevealIndex] = useState(-1);
@@ -57,6 +62,11 @@ export default function ThreeTarotCardsScreen({ navigation }) {
       Animated.timing(scale, { toValue: 1, duration: 450, easing: Easing.out(Easing.ease), useNativeDriver: true }),
     ]).start();
   };
+
+  useEffect(() => {
+    isActiveRef.current = true;
+    return () => { isActiveRef.current = false; };
+  }, []);
 
   useEffect(() => {
     if (locked) {
@@ -89,7 +99,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
     setLoadingReading(false);
   }, [locked, useSaved, i18n.language]);
 
-  const draw = async (activeRef) => {
+  const draw = async () => {
     setPhase('loading');
     setErrorMsg('');
     try {
@@ -97,7 +107,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
       const trio = Array.isArray(data?.cards) ? data.cards.slice(0, 3) : [];
       // prefetch images
       await Promise.all(trio.map(c => (c?.imageUrl ? Image.prefetch(c.imageUrl) : Promise.resolve())));
-      if (!activeRef.current) return;
+      if (!isActiveRef.current) return;
 
       setCards(trio);
       setReading('');
@@ -109,19 +119,19 @@ export default function ThreeTarotCardsScreen({ navigation }) {
 
       // Reveal with EXACTLY 1.5s between starts
       const startReveal = (idx = 0) => {
-        if (!activeRef.current) return;
+        if (!isActiveRef.current) return;
         setRevealIndex(idx);
         animateIn();
-        const NEXT_DELAY_MS = 1500;
+        const NEXT_DELAY_MS = 2300;
         setTimeout(() => {
-          if (!activeRef.current) return;
+          if (!isActiveRef.current) return;
           if (idx < 2) startReveal(idx + 1);
-          else setTimeout(() => activeRef.current && setPhase('grid'), 500);
+          else setTimeout(() => isActiveRef.current && setPhase('grid'), 800);
         }, NEXT_DELAY_MS);
       };
       setTimeout(() => startReveal(0), 350);
     } catch (e) {
-      if (!activeRef.current) return;
+      if (!isActiveRef.current) return;
       setErrorMsg(e?.message || 'Failed to draw cards');
       setPhase('error');
     }
@@ -130,11 +140,9 @@ export default function ThreeTarotCardsScreen({ navigation }) {
   // Kick off draw if not locked
   useEffect(() => {
     if (locked || useSaved) return;
-    const activeRef = { current: true };
-    draw(activeRef);
-    return () => { activeRef.current = false; };
+    draw();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i18n.language, locked, useSaved]);
+  }, [i18n.language, locked]);
 
   const onRevealTruth = async () => {
     if (cards.length !== 3) return;
@@ -244,6 +252,8 @@ export default function ThreeTarotCardsScreen({ navigation }) {
             <Text style={styles.readingText}>{reading}</Text>
           </View>
         )}
+
+        <NativeAdCard unitId={NATIVE_THREE_TAROT_AD_UNIT_ID} />
       </View>
     </ScrollView>
     );
@@ -342,9 +352,11 @@ export default function ThreeTarotCardsScreen({ navigation }) {
                   <Text style={styles.readingText}>{savedToday.reading}</Text>
                 </View>
               )}
+
+              <NativeAdCard unitId={NATIVE_THREE_TAROT_AD_UNIT_ID} />
             </ScrollView>
 
-            <View style={[styles.bottomBar, { zIndex: 10 }]}>
+            <View style={[styles.bottomBar, { zIndex: 10, paddingBottom: 20 + insets.bottom }]}>
               <MysticButton
                 label={t('back') || 'Back'}
                 onPress={() =>
@@ -426,7 +438,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
             )}
           </View>
 
-          <View style={[styles.bottomBar, { zIndex: 10 }]}>
+          <View style={[styles.bottomBar, { zIndex: 10, paddingBottom: 20 + insets.bottom }]}>
             {showRevealBtn ? (
               <MysticButton
                 label={t('reveal_the_truth') || 'Reveal the truth'}
@@ -580,7 +592,7 @@ const styles = StyleSheet.create({
 
   /* Reveal fullscreen */
   revealWrap: { width: '100%', alignItems: 'center', justifyContent: 'center' },
-  revealImg: { width: '100%', height: SCREEN_H * 0.6, borderRadius: 16 },
+  revealImg: { width: '100%', height: SCREEN_H * 0.7, borderRadius: 16 },
   revealCaption: { marginTop: 10, alignItems: 'center' },
   revealPhase: { color: '#fff', fontWeight: '800', fontSize: 16 },
   revealName: { color: '#fff', opacity: 0.95, fontSize: 14, marginTop: 2 },

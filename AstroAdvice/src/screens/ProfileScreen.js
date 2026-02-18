@@ -1,9 +1,5 @@
 // src/screens/ProfileScreen.js
-// Requires: @react-native-community/datetimepicker
-//   npm i @react-native-community/datetimepicker
-//   (iOS) cd ios && pod install
-
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,14 +7,15 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  Platform,
   ImageBackground,
+  Modal,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@react-navigation/native';
 import { useUser } from '../context/UserContext';
 import { goBackOrHome } from '../utils/nav';
+import AdBanner from '../components/ads/AdBanner';
+import { BANNER_PROFILE_AD_UNIT_ID } from '../config/admob';
 
 /* ---------- Helpers: zodiac derivation (silent) ---------- */
 function getWesternZodiac(dateISO) {
@@ -85,6 +82,12 @@ export default function ProfileScreen({ navigation }) {
   const { t } = useTranslation('common');
   const { colors } = useTheme();
   const user = useUser();
+  const now = useMemo(() => new Date(), []);
+  const MIN_YEAR = 1920;
+  const MAX_YEAR = now.getFullYear();
+  const MAX_MONTH = now.getMonth() + 1;
+  const MAX_DAY = now.getDate();
+  const MINUTE_STEP = 5;
 
   // hydrate existing or defaults
   const initDate = user?.dob ? new Date(user.dob) : new Date(1990, 0, 1);
@@ -101,11 +104,61 @@ export default function ProfileScreen({ navigation }) {
   })();
 
   const [sex, setSex] = useState(user?.sex || '');
-  const [dateVal, setDateVal] = useState(initDate);
-  const [timeVal, setTimeVal] = useState(initTime);
+  const [yearSel, setYearSel] = useState(initDate.getFullYear());
+  const [monthSel, setMonthSel] = useState(initDate.getMonth() + 1);
+  const [daySel, setDaySel] = useState(initDate.getDate());
+  const [hourSel, setHourSel] = useState(initTime.getHours());
+  const initMinute = initTime.getMinutes();
+  const roundedMinute = Math.round(initMinute / MINUTE_STEP) * MINUTE_STEP;
+  const safeMinute = Math.min(60 - MINUTE_STEP, Math.max(0, roundedMinute));
+  const [minuteSel, setMinuteSel] = useState(safeMinute);
+  const [activePicker, setActivePicker] = useState(null); // 'year' | 'month' | 'day' | 'hour' | 'minute'
 
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
+  useEffect(() => {
+    if (yearSel === MAX_YEAR && monthSel > MAX_MONTH) {
+      setMonthSel(MAX_MONTH);
+    }
+  }, [yearSel, monthSel, MAX_YEAR, MAX_MONTH]);
+
+  useEffect(() => {
+    const maxDayInMonth = new Date(yearSel, monthSel, 0).getDate();
+    const maxDay = (yearSel === MAX_YEAR && monthSel === MAX_MONTH)
+      ? Math.min(maxDayInMonth, MAX_DAY)
+      : maxDayInMonth;
+    if (daySel > maxDay) setDaySel(maxDay);
+  }, [yearSel, monthSel, daySel, MAX_YEAR, MAX_MONTH, MAX_DAY]);
+
+  const dateVal = useMemo(
+    () => new Date(yearSel, monthSel - 1, daySel),
+    [yearSel, monthSel, daySel]
+  );
+  const timeVal = useMemo(() => {
+    const d = new Date();
+    d.setHours(hourSel, minuteSel, 0, 0);
+    return d;
+  }, [hourSel, minuteSel]);
+
+  const yearOptions = useMemo(() => {
+    const years = [];
+    for (let y = MAX_YEAR; y >= MIN_YEAR; y--) years.push(y);
+    return years;
+  }, [MAX_YEAR]);
+  const monthOptions = useMemo(() => {
+    const end = (yearSel === MAX_YEAR) ? MAX_MONTH : 12;
+    return Array.from({ length: end }, (_, i) => i + 1);
+  }, [yearSel, MAX_YEAR, MAX_MONTH]);
+  const dayOptions = useMemo(() => {
+    const maxDayInMonth = new Date(yearSel, monthSel, 0).getDate();
+    const end = (yearSel === MAX_YEAR && monthSel === MAX_MONTH)
+      ? Math.min(maxDayInMonth, MAX_DAY)
+      : maxDayInMonth;
+    return Array.from({ length: end }, (_, i) => i + 1);
+  }, [yearSel, monthSel, MAX_YEAR, MAX_MONTH, MAX_DAY]);
+  const hourOptions = useMemo(() => Array.from({ length: 24 }, (_, i) => i), []);
+  const minuteOptions = useMemo(
+    () => Array.from({ length: Math.floor(60 / MINUTE_STEP) }, (_, i) => i * MINUTE_STEP),
+    []
+  );
 
   // Derived silently (not displayed)
   const dobISO = useMemo(() => fmtDate(dateVal), [dateVal]);
@@ -117,15 +170,6 @@ export default function ProfileScreen({ navigation }) {
   const birthHour = useMemo(() => fmtTime(timeVal), [timeVal]);
 
   const canSave = !!sex && !!dobISO && !!birthHour;
-
-  const onChangeDate = (event, selectedDate) => {
-    setShowDatePicker(Platform.OS === 'ios'); // keep open on iOS
-    if (selectedDate) setDateVal(selectedDate);
-  };
-  const onChangeTime = (event, selectedTime) => {
-    setShowTimePicker(Platform.OS === 'ios');
-    if (selectedTime) setTimeVal(selectedTime);
-  };
 
   const saveProfile = async () => {
     if (!canSave) {
@@ -159,9 +203,6 @@ export default function ProfileScreen({ navigation }) {
           keyboardShouldPersistTaps="handled"
         >
           <Text style={styles.title}>{t('profile') || 'Profile'}</Text>
-          <Text style={styles.subtitle}>
-            {t('profile_intro') || 'Insert data'}
-          </Text>
 
           {/* Sex */}
           <Section label={t('sex') || 'Sex'}>
@@ -181,38 +222,39 @@ export default function ProfileScreen({ navigation }) {
 
           {/* DOB */}
           <Section label={t('dob') || 'Date of birth'}>
-            <PickerButton
-              label={dobISO}
-              onPress={() => setShowDatePicker(true)}
-              icon="📅"
-            />
-            {showDatePicker && (
-              <DateTimePicker
-                value={dateVal}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={onChangeDate}
-                maximumDate={new Date()} // no future dates
+            <View style={styles.selectRow}>
+              <SelectBox
+                label="YYYY"
+                value={String(yearSel)}
+                onPress={() => setActivePicker('year')}
               />
-            )}
+              <SelectBox
+                label="MM"
+                value={String(monthSel).padStart(2, '0')}
+                onPress={() => setActivePicker('month')}
+              />
+              <SelectBox
+                label="DD"
+                value={String(daySel).padStart(2, '0')}
+                onPress={() => setActivePicker('day')}
+              />
+            </View>
           </Section>
 
           {/* Birth Hour (required) */}
           <Section label={t('birth_hour') || 'Birth hour'}>
-            <PickerButton
-              label={birthHour}
-              onPress={() => setShowTimePicker(true)}
-              icon="⏰"
-            />
-            {showTimePicker && (
-              <DateTimePicker
-                value={timeVal}
-                mode="time"
-                is24Hour
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={onChangeTime}
+            <View style={styles.selectRow}>
+              <SelectBox
+                label="HH"
+                value={String(hourSel).padStart(2, '0')}
+                onPress={() => setActivePicker('hour')}
               />
-            )}
+              <SelectBox
+                label="MM"
+                value={String(minuteSel).padStart(2, '0')}
+                onPress={() => setActivePicker('minute')}
+              />
+            </View>
             <Text style={styles.hint}>
               {t('birth_hour_required_hint') || 'Please provide your approximate birth hour.'}
             </Text>
@@ -222,6 +264,47 @@ export default function ProfileScreen({ navigation }) {
 
           <View style={{ height: 24 }} />
         </ScrollView>
+        <AdBanner unitId={BANNER_PROFILE_AD_UNIT_ID} />
+
+        <OptionModal
+          visible={activePicker === 'year'}
+          title="Year"
+          options={yearOptions}
+          onSelect={(v) => setYearSel(v)}
+          onClose={() => setActivePicker(null)}
+        />
+        <OptionModal
+          visible={activePicker === 'month'}
+          title="Month"
+          options={monthOptions}
+          onSelect={(v) => setMonthSel(v)}
+          onClose={() => setActivePicker(null)}
+          pad={2}
+        />
+        <OptionModal
+          visible={activePicker === 'day'}
+          title="Day"
+          options={dayOptions}
+          onSelect={(v) => setDaySel(v)}
+          onClose={() => setActivePicker(null)}
+          pad={2}
+        />
+        <OptionModal
+          visible={activePicker === 'hour'}
+          title="Hour"
+          options={hourOptions}
+          onSelect={(v) => setHourSel(v)}
+          onClose={() => setActivePicker(null)}
+          pad={2}
+        />
+        <OptionModal
+          visible={activePicker === 'minute'}
+          title="Minute"
+          options={minuteOptions}
+          onSelect={(v) => setMinuteSel(v)}
+          onClose={() => setActivePicker(null)}
+          pad={2}
+        />
       </SafeAreaView>
     </ImageBackground>
   );
@@ -250,12 +333,45 @@ function Chip({ label, active, onPress }) {
   );
 }
 
-function PickerButton({ label, onPress, icon }) {
+function SelectBox({ label, value, onPress }) {
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.92} style={styles.pickerBtn}>
-      <Text style={styles.pickerIcon}>{icon || '✦'}</Text>
-      <Text style={styles.pickerText}>{label}</Text>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.92} style={styles.selectBox}>
+      <Text style={styles.selectLabel}>{label}</Text>
+      <Text style={styles.selectValue}>{value}</Text>
     </TouchableOpacity>
+  );
+}
+
+function OptionModal({ visible, title, options, onSelect, onClose, pad = 0 }) {
+  if (!visible) return null;
+  return (
+    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={onClose}>
+        <TouchableOpacity style={styles.modalSheet} activeOpacity={1} onPress={() => {}}>
+          <Text style={styles.modalTitle}>{title}</Text>
+          <ScrollView style={styles.modalList} contentContainerStyle={{ paddingBottom: 8 }}>
+            {options.map((opt) => {
+              const value = typeof opt === 'number' ? opt : opt?.value;
+              const label = typeof opt === 'number'
+                ? String(opt).padStart(pad, '0')
+                : (opt?.label ?? String(opt));
+              return (
+                <TouchableOpacity
+                  key={`${title}-${value}`}
+                  style={styles.modalItem}
+                  onPress={() => {
+                    onSelect(value);
+                    onClose();
+                  }}
+                >
+                  <Text style={styles.modalItemText}>{label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
   );
 }
 
@@ -290,13 +406,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 6,
   },
-  subtitle: {
-    color: '#f6e6c9',
-    opacity: 0.85,
-    textAlign: 'center',
-    marginTop: 6,
-    marginBottom: 10,
-  },
 
   section: {
     backgroundColor: 'rgba(20, 12, 28, 0.65)',
@@ -329,19 +438,62 @@ const styles = StyleSheet.create({
   chipText: { color: '#e9e0ff', fontWeight: '700' },
   chipTextActive: { color: '#fff' },
 
-  pickerBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+  selectRow: { flexDirection: 'row', gap: 10 },
+  selectBox: {
+    flex: 1,
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(214,166,59,0.25)',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
-  pickerIcon: { fontSize: 18, color: '#ffd262' },
-  pickerText: { color: '#fff', fontWeight: '700', letterSpacing: 0.3 },
+  selectLabel: {
+    color: '#ffd262',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+  },
+  selectValue: {
+    marginTop: 2,
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 16,
+    letterSpacing: 0.3,
+  },
+
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    padding: 16,
+    justifyContent: 'center',
+  },
+  modalSheet: {
+    backgroundColor: '#1b1325',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(214,166,59,0.35)',
+    padding: 14,
+    maxHeight: '70%',
+  },
+  modalTitle: {
+    color: '#ffd262',
+    fontWeight: '800',
+    fontSize: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalList: { maxHeight: 360 },
+  modalItem: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  modalItemText: {
+    color: '#fff',
+    fontSize: 15,
+    textAlign: 'center',
+  },
 
   hint: {
     marginTop: 6,
@@ -374,6 +526,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
 
 
 

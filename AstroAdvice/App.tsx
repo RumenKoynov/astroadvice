@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, ActivityIndicator, StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { navigationRef } from './src/utils/nav';
+import mobileAds from 'react-native-google-mobile-ads';
 
 // Initialize i18n resources once
 import './src/i18n';
@@ -35,6 +36,10 @@ function ThemedNav() {
 }
 
 export default function App() {
+  useEffect(() => {
+    mobileAds().initialize();
+  }, []);
+
   return (
     <ThemeProvider>
       <UserProvider>
@@ -46,7 +51,6 @@ export default function App() {
     </ThemeProvider>
   );
 }
-
 
 
 

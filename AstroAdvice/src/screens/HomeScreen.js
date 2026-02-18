@@ -1,9 +1,11 @@
 // src/screens/HomeScreen.js
 import React from 'react';
-import { View, Text, StyleSheet, ImageBackground, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, Pressable, SafeAreaView } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import AdBanner from '../components/ads/AdBanner';
+import { BANNER_HOME_AD_UNIT_ID } from '../config/admob';
 
 export default function HomeScreen({ navigation }) {
   const { colors } = useTheme();
@@ -29,7 +31,8 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.settingsBtnIcon}>⚙</Text>
       </Pressable>
 
-      <View style={styles.container}>
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.container}>
         <Text style={styles.title}>{t('home_title') || 'Choose your path'}</Text>
 
         <Pressable
@@ -48,9 +51,17 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.cardHint}>{t('go_chinese_hint') || 'Your zodiac animal & traits'}</Text>
         </Pressable>
 
- <Pressable onPress={() => navigation.navigate('Tarot')} style={[styles.card, { borderColor: 'rgba(0,188,212,0.35)' }]}>
-  <Text style={styles.cardTitle}>{t('go_tarot') || 'Tarot (Single)'}</Text>
-  <Text style={styles.cardHint}>{t('go_tarot_hint') || 'Draw one card & meaning'}</Text>
+        <Pressable
+          onPress={() => navigation.navigate('Number')}
+          style={[styles.card, { borderColor: 'rgba(164,69,255,0.45)' }]}
+        >
+          <Text style={styles.cardTitle}>{t('daily_number_title') || 'Your daily number'}</Text>
+          <Text style={styles.cardHint}>{t('daily_number_hint') || 'Reveal a number for today'}</Text>
+        </Pressable>
+
+<Pressable onPress={() => navigation.navigate('Tarot')} style={[styles.card, { borderColor: 'rgba(0,188,212,0.35)' }]}>
+  <Text style={styles.cardTitle}>{t('go_tarot') || 'Tarrot Card'}</Text>
+  <Text style={styles.cardHint}>{t('go_tarot_hint') || 'Your daily tarrot card'}</Text>
 </Pressable>
 
 <Pressable onPress={() => navigation.navigate('ThreeTarot')} style={[styles.card, { borderColor: 'rgba(0,188,212,0.35)' }]}>
@@ -60,7 +71,9 @@ export default function HomeScreen({ navigation }) {
 
 
 
-      </View>
+        </View>
+        <AdBanner unitId={BANNER_HOME_AD_UNIT_ID} />
+      </SafeAreaView>
     </ImageBackground>
   );
 }
@@ -68,6 +81,7 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   bg: { flex: 1 },
   overlay: { ...StyleSheet.absoluteFillObject },
+  safe: { flex: 1 },
   container: {
     flex: 1,
     paddingHorizontal: 18,

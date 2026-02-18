@@ -13,7 +13,9 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { useUser } from '../context/UserContext';
-import { DEV_OVERRIDE_KEY, setDeveloperMode } from '../config/featureFlags';
+import { DEV_OVERRIDE_KEY, is_dev, setDeveloperMode } from '../config/featureFlags';
+import AdBanner from '../components/ads/AdBanner';
+import { BANNER_SETTINGS_AD_UNIT_ID } from '../config/admob';
 
 export default function SettingsScreen({ navigation }) {
   const { t, i18n } = useTranslation('common');
@@ -46,12 +48,13 @@ export default function SettingsScreen({ navigation }) {
   };
 
   useEffect(() => {
+    if (!is_dev) return;
     (async () => {
       try {
         const raw = await AsyncStorage.getItem(DEV_OVERRIDE_KEY);
         if (raw === null) {
           setDeveloperMode(null);
-          setIsDeveloper(__DEV__);
+          setIsDeveloper(is_dev);
         } else {
           const enabled = raw === '1';
           setIsDeveloper(enabled);
@@ -62,14 +65,24 @@ export default function SettingsScreen({ navigation }) {
         setIsDeveloper(__DEV__);
       }
     })();
-  }, []);
+  }, [is_dev]);
 
   const toggleDeveloper = async (next) => {
+    if (!is_dev) return;
     const value = !!next;
     setIsDeveloper(value);
     setDeveloperMode(value);
     try {
       await AsyncStorage.setItem(DEV_OVERRIDE_KEY, value ? '1' : '0');
+    } catch {
+      // no-op
+    }
+  };
+
+  const clearDailyData = async () => {
+    try {
+      user.clearDaily();
+      await AsyncStorage.removeItem('astro_daily_number_v1');
     } catch {
       // no-op
     }
@@ -120,27 +133,43 @@ export default function SettingsScreen({ navigation }) {
           </Text>
         </Section>
 
-        {/* Debug */}
-        <Section title={t('developer') || 'Developer'}>
-          <View style={styles.rowBetween}>
-            <Text style={styles.itemTitle}>
-              {t('is_developer') || 'is_developer'}
+        {/* Debug (dev builds only) */}
+        {is_dev && (
+          <Section title={t('developer') || 'Developer'}>
+            <View style={styles.rowBetween}>
+              <Text style={styles.itemTitle}>
+                {t('is_developer') || 'is_developer'}
+              </Text>
+              <Switch
+                value={isDeveloper}
+                onValueChange={toggleDeveloper}
+              />
+            </View>
+            <Text style={styles.hintSmall}>
+              {t('developer_debug_hint') || 'Enables debug bypasses for daily limits.'}
             </Text>
-            <Switch
-              value={isDeveloper}
-              onValueChange={toggleDeveloper}
-            />
-          </View>
-          <Text style={styles.hintSmall}>
-            {t('developer_debug_hint') || 'Enables debug bypasses for daily limits.'}
-          </Text>
-        </Section>
+            {isDeveloper && (
+              <>
+                <View style={{ height: 10 }} />
+                <Text style={styles.itemTitle}>{t('daily_data') || 'Daily data'}</Text>
+                <Text style={styles.hintSmall}>
+                  {t('daily_data_explain') || 'Clears saved advice, tarot and Chinese horoscope for today.'}
+                </Text>
+                <MysticButton
+                  label={t('clear_saved_today') || "Clear saved today's content"}
+                  onPress={clearDailyData}
+                />
+              </>
+            )}
+          </Section>
+        )}
 
         {/* Back */}
         <View style={{ height: 8 }} />
         <MysticButton label={t('back') || 'Back'} onPress={() => navigation.goBack()} />
         <View style={{ height: 24 }} />
         </ScrollView>
+        <AdBanner unitId={BANNER_SETTINGS_AD_UNIT_ID} />
       </SafeAreaView>
     </ImageBackground>
   );

@@ -14,12 +14,15 @@ import {
   Dimensions,
   Modal,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@react-navigation/native';
 
 import { apiFetch } from '../services/api';
 import { useUser } from '../context/UserContext';
-import { BYPASS_DAILY_SINGLE_LIMIT } from '../config/featureFlags'; // add to your flags if you want
+import { BYPASS_DAILY_LIMITS } from '../config/featureFlags';
+import AdBanner from '../components/ads/AdBanner';
+import { BANNER_TAROT_AD_UNIT_ID } from '../config/admob';
 
 const { height: SCREEN_H } = Dimensions.get('window');
 const DATE_KEY = () => new Date().toISOString().slice(0, 10);
@@ -28,12 +31,13 @@ export default function TarotScreen({ navigation }) {
   const { t, i18n } = useTranslation('common');
   const { colors } = useTheme();
   const user = useUser();
+  const insets = useSafeAreaInsets();
 
   const todayKey = useMemo(() => DATE_KEY(), []);
   const savedRaw = user?.daily?.tarotSingle?.[todayKey] || null;
   const savedToday = savedRaw && savedRaw.lang === i18n.language ? savedRaw : null;
   const hasSaved = !!savedToday;
-  const enforceLimit = !BYPASS_DAILY_SINGLE_LIMIT;
+  const enforceLimit = !BYPASS_DAILY_LIMITS;
   const locked = enforceLimit && hasSaved;
   const showLocked = hasSaved;
 
@@ -42,6 +46,8 @@ export default function TarotScreen({ navigation }) {
   const [phase, setPhase] = useState(showLocked ? 'locked' : 'idle'); // idle | showing | locked
   const [errorMsg, setErrorMsg] = useState('');
   const [previewCard, setPreviewCard] = useState(null);
+  const showBanner = !!card && !loading;
+  const bottomPad = showBanner ? 8 : 20 + insets.bottom;
 
   // Smooth enter for image + text
   const fade = useRef(new Animated.Value(0)).current;
@@ -205,7 +211,7 @@ export default function TarotScreen({ navigation }) {
               )}
             </ScrollView>
 
-            <View style={styles.bottomBar}>
+            <View style={[styles.bottomBar, { paddingBottom: bottomPad }]}>
               <MysticButton
                 label={
                   locked
@@ -217,6 +223,7 @@ export default function TarotScreen({ navigation }) {
               />
             </View>
           </View>
+          {showBanner && <AdBanner unitId={BANNER_TAROT_AD_UNIT_ID} />}
         </SafeAreaView>
       </ImageBackground>
     );
@@ -313,7 +320,7 @@ export default function TarotScreen({ navigation }) {
           </View>
 
           {/* Bottom button */}
-          <View style={styles.bottomBar}>
+          <View style={[styles.bottomBar, { paddingBottom: bottomPad }]}>
             <MysticButton
               label={
                 !card
@@ -325,6 +332,7 @@ export default function TarotScreen({ navigation }) {
             />
           </View>
         </View>
+        {showBanner && <AdBanner unitId={BANNER_TAROT_AD_UNIT_ID} />}
       </SafeAreaView>
     </ImageBackground>
   );
@@ -371,12 +379,12 @@ const styles = StyleSheet.create({
 
   cardImg: {
     width: '100%',
-    height: SCREEN_H * 0.5,
+    height: SCREEN_H * 0.68,
     borderRadius: 16,
   },
   cardImgLocked: {
     width: '100%',
-    height: SCREEN_H * 0.45,
+    height: SCREEN_H * 0.60,
     borderRadius: 16,
   },
   modalBackdrop: {
@@ -497,11 +505,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-
-
-
-
-
-
-
-
