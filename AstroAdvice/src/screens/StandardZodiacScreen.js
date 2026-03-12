@@ -1,4 +1,4 @@
-// src/screens/StandartZodiacScreen.js
+// src/screens/StandardZodiacScreen.js
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   View,
@@ -38,7 +38,7 @@ const zodiacBg = {
   Pisces: require('../../assets/images/Pisces.png'),
 };
 
-export default function StandartZodiacScreen({ navigation }) {
+export default function StandardZodiacScreen({ navigation }) {
   const { t, i18n } = useTranslation('common');
   const { colors } = useTheme();
   const user = useUser();
@@ -76,7 +76,7 @@ export default function StandartZodiacScreen({ navigation }) {
   useEffect(() => {
     if (!loggedScreenRef.current) {
       loggedScreenRef.current = true;
-      logScreen('StandartZodiac');
+      logScreen('StandardZodiac');
       logEvent('feature_opened', { feature: 'daily_advice' });
     }
   }, []);

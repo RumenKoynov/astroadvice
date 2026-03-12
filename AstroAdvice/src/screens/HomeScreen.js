@@ -49,7 +49,7 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.title}>{t('home_title') || 'Choose your path'}</Text>
 
         <Pressable
-          onPress={() => openFeature('daily_advice', 'StandartZodiac')}
+          onPress={() => openFeature('daily_advice', 'StandardZodiac')}
           style={[styles.card, { borderColor: 'rgba(255,215,0,0.35)' }]}
         >
           <Text style={styles.cardTitle}>{t('go_standard') || 'Daily Horoscope'}</Text>
@@ -145,5 +145,6 @@ const styles = StyleSheet.create({
   cardTitle: { color: '#F3E5F5', fontSize: 18, fontWeight: '800', textAlign: 'center', marginBottom: 6 },
   cardHint: { color: '#E0DFF7', fontSize: 14, textAlign: 'center', opacity: 0.9 },
 });
+
 
 

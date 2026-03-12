@@ -9,7 +9,7 @@ import { isProfileComplete } from '../utils/profile';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-import StandartZodiacScreen from '../screens/StandartZodiacScreen';
+import StandardZodiacScreen from '../screens/StandardZodiacScreen';
 import ChineseHoroscopeScreen from '../screens/ChineseHoroscopeScreen';
 import TarotScreen from '../screens/TarotScreen';
 import ThreeTarotCardsScreen from '../screens/ThreeTarotCardsScreen';
@@ -85,8 +85,8 @@ export default function AppNavigator() {
         options={{ title: t('settings') || 'Settings' }}
       />
       <Stack.Screen
-        name="StandartZodiac"
-        component={StandartZodiacScreen}
+        name="StandardZodiac"
+        component={StandardZodiacScreen}
         options={{ title: t('zodiac') || 'Zodiac' }}
       />
       <Stack.Screen
