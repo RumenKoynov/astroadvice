@@ -23,6 +23,7 @@ import { useUser } from '../context/UserContext';
 import { BYPASS_DAILY_LIMITS } from '../config/featureFlags';
 import AdBanner from '../components/ads/AdBanner';
 import { BANNER_TAROT_AD_UNIT_ID } from '../config/admob';
+import { logEvent, logScreen } from '../services/analytics';
 
 const { height: SCREEN_H } = Dimensions.get('window');
 const DATE_KEY = () => new Date().toISOString().slice(0, 10);
@@ -32,6 +33,8 @@ export default function TarotScreen({ navigation }) {
   const { colors } = useTheme();
   const user = useUser();
   const insets = useSafeAreaInsets();
+  const loggedScreenRef = useRef(false);
+  const loggedViewedRef = useRef(false);
 
   const todayKey = useMemo(() => DATE_KEY(), []);
   const savedRaw = user?.daily?.tarotSingle?.[todayKey] || null;
@@ -86,6 +89,14 @@ export default function TarotScreen({ navigation }) {
   };
 
   useEffect(() => {
+    if (!loggedScreenRef.current) {
+      loggedScreenRef.current = true;
+      logScreen('Tarot');
+      logEvent('feature_opened', { feature: 'tarot_single' });
+    }
+  }, []);
+
+  useEffect(() => {
     if (showLocked && savedToday?.card) {
       setCard(savedToday.card);
       setPhase('locked');
@@ -94,6 +105,21 @@ export default function TarotScreen({ navigation }) {
       setPhase('idle');
     }
     setErrorMsg('');
+  }, [showLocked, savedToday?.card, i18n.language]);
+
+  useEffect(() => {
+    if (!showLocked) {
+      loggedViewedRef.current = false;
+      return;
+    }
+    if (savedToday?.card && !loggedViewedRef.current) {
+      loggedViewedRef.current = true;
+      logEvent('content_viewed', {
+        feature: 'tarot_single',
+        lang: i18n.language,
+        is_cached: 1,
+      });
+    }
   }, [showLocked, savedToday?.card, i18n.language]);
 
   const drawCard = async ({ stayLocked = false } = {}) => {
@@ -109,8 +135,15 @@ export default function TarotScreen({ navigation }) {
       if (!stayLocked) animateIn();
       // Save for today (locks until tomorrow)
       user.setDaily(todayKey, 'tarotSingle', { card: res || null, lang: i18n.language });
+      logEvent('content_generated', { feature: 'tarot_single', lang: i18n.language });
+      logEvent('tarot_single_reveal', { lang: i18n.language, is_cached: 0 });
+      logEvent('content_viewed', { feature: 'tarot_single', lang: i18n.language, is_cached: 0 });
     } catch (e) {
       setErrorMsg(e?.message || 'Failed to draw a card');
+      logEvent('error_shown', {
+        feature: 'tarot_single',
+        code: String(e?.message || 'error').slice(0, 60),
+      });
     } finally {
       setLoading(false);
     }

@@ -16,6 +16,7 @@ import { useUser } from '../context/UserContext';
 import { DEV_OVERRIDE_KEY, is_dev, setDeveloperMode } from '../config/featureFlags';
 import AdBanner from '../components/ads/AdBanner';
 import { BANNER_SETTINGS_AD_UNIT_ID } from '../config/admob';
+import { logEvent, logScreen } from '../services/analytics';
 
 export default function SettingsScreen({ navigation }) {
   const { t, i18n } = useTranslation('common');
@@ -42,10 +43,15 @@ export default function SettingsScreen({ navigation }) {
       await i18n.changeLanguage(code);
       await AsyncStorage.setItem('uiLanguage', code);
       user.setLanguage(code);
+      logEvent('language_changed', { language: code, source: 'settings' });
     } catch (e) {
       // no-op; i18n will keep previous language
     }
   };
+
+  useEffect(() => {
+    logScreen('Settings');
+  }, []);
 
   useEffect(() => {
     if (!is_dev) return;

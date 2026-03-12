@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import {
   NativeAd,
@@ -9,9 +9,11 @@ import {
   NativeMediaAspectRatio,
 } from 'react-native-google-mobile-ads';
 import { AD_REQUEST_OPTIONS } from '../../config/admob';
+import { logEvent } from '../../services/analytics';
 
-export default function NativeAdCard({ unitId }) {
+export default function NativeAdCard({ unitId, placement }) {
   const [nativeAd, setNativeAd] = useState(null);
+  const loggedRef = useRef(false);
 
   useEffect(() => {
     if (!unitId) return () => {};
@@ -33,6 +35,16 @@ export default function NativeAdCard({ unitId }) {
       if (loadedAd) loadedAd.destroy();
     };
   }, [unitId]);
+
+  useEffect(() => {
+    if (!nativeAd) return;
+    if (loggedRef.current) return;
+    loggedRef.current = true;
+    logEvent('ad_impression_shown', {
+      placement: placement || unitId,
+      ad_type: 'native',
+    });
+  }, [nativeAd, placement, unitId]);
 
   if (!unitId || !nativeAd) return null;
 

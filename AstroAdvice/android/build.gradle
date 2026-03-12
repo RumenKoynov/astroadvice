@@ -1,10 +1,10 @@
 buildscript {
     ext {
         buildToolsVersion = "35.0.0"
-        minSdkVersion = 23
+        minSdkVersion = 24
         compileSdkVersion = 35
         targetSdkVersion = 35
-        ndkVersion = "26.1.10909125"
+        ndkVersion = "28.2.13676358"
         kotlinVersion = "1.9.24"
     }
     repositories {
@@ -12,10 +12,14 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle")
+        classpath("com.android.tools.build:gradle:8.5.1")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
     }
+}
+
+plugins {
+    id 'com.google.gms.google-services' version '4.4.4' apply false
 }
 
 apply plugin: "com.facebook.react.rootproject"

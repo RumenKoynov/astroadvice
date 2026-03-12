@@ -16,3 +16,7 @@ android/.gradle/
 android/app/build/
 *.keystore
 *.jks
+
+/AstroAdvice/android/.kotlin/
+/AstroAdvice/android/app/google-services.json
+

@@ -1,5 +1,5 @@
 // src/screens/ProfileScreen.js
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,14 @@ import {
   ImageBackground,
   Modal,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@react-navigation/native';
 import { useUser } from '../context/UserContext';
 import { goBackOrHome } from '../utils/nav';
 import AdBanner from '../components/ads/AdBanner';
 import { BANNER_PROFILE_AD_UNIT_ID } from '../config/admob';
+import { logEvent, logScreen } from '../services/analytics';
 
 /* ---------- Helpers: zodiac derivation (silent) ---------- */
 function getWesternZodiac(dateISO) {
@@ -79,9 +81,11 @@ const fmtTime = (d) => {
 };
 
 export default function ProfileScreen({ navigation }) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const { colors } = useTheme();
   const user = useUser();
+  const loggedOnboardingRef = useRef(false);
+  const loggedScreenRef = useRef(false);
   const now = useMemo(() => new Date(), []);
   const MIN_YEAR = 1920;
   const MAX_YEAR = now.getFullYear();
@@ -113,6 +117,45 @@ export default function ProfileScreen({ navigation }) {
   const safeMinute = Math.min(60 - MINUTE_STEP, Math.max(0, roundedMinute));
   const [minuteSel, setMinuteSel] = useState(safeMinute);
   const [activePicker, setActivePicker] = useState(null); // 'year' | 'month' | 'day' | 'hour' | 'minute'
+  const langs = useMemo(
+    () => [
+      { code: 'en', label: 'English' },
+      { code: 'bg', label: 'Български' },
+      { code: 'ru', label: 'Русский' },
+      { code: 'fr', label: 'Français' },
+      { code: 'de', label: 'Deutsch' },
+      { code: 'tr', label: 'Türkçe' },
+      { code: 'es', label: 'Español' },
+      { code: 'it', label: 'Italiano' },
+    ],
+    []
+  );
+
+  const onChangeLang = async (code) => {
+    try {
+      await i18n.changeLanguage(code);
+      await AsyncStorage.setItem('uiLanguage', code);
+      user.setLanguage(code);
+      logEvent('language_changed', { language: code, source: 'onboarding' });
+    } catch {
+      // no-op
+    }
+  };
+
+  useEffect(() => {
+    if (!loggedScreenRef.current) {
+      loggedScreenRef.current = true;
+      logScreen('Profile');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loggedOnboardingRef.current) return;
+    if (!user?.sex && !user?.dob) {
+      loggedOnboardingRef.current = true;
+      logEvent('onboarding_start', { entry_point: 'first_launch' });
+    }
+  }, [user?.sex, user?.dob]);
 
   useEffect(() => {
     if (yearSel === MAX_YEAR && monthSel > MAX_MONTH) {
@@ -185,6 +228,12 @@ export default function ProfileScreen({ navigation }) {
       chineseElement: cnElem,
       age,
     });
+    logEvent('profile_saved', {
+      has_birth_hour: !!birthHour,
+      has_sex: !!sex,
+      has_dob: !!dobISO,
+      language: i18n.language,
+    });
     goBackOrHome();
   };
 
@@ -203,6 +252,30 @@ export default function ProfileScreen({ navigation }) {
           keyboardShouldPersistTaps="handled"
         >
           <Text style={styles.title}>{t('profile') || 'Profile'}</Text>
+
+          {/* Language */}
+          <Section label={t('language') || 'Language'}>
+            <View style={styles.langGrid}>
+              {langs.map((l) => {
+                const active = i18n.language === l.code;
+                return (
+                  <TouchableOpacity
+                    key={l.code}
+                    onPress={() => onChangeLang(l.code)}
+                    style={[styles.pill, active && styles.pillActive]}
+                    activeOpacity={0.9}
+                  >
+                    <Text style={[styles.pillText, active && styles.pillTextActive]}>
+                      {l.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <Text style={styles.hintSmall}>
+              {t('language_applies_immediately') || 'Changes apply immediately.'}
+            </Text>
+          </Section>
 
           {/* Sex */}
           <Section label={t('sex') || 'Sex'}>
@@ -501,6 +574,12 @@ const styles = StyleSheet.create({
     opacity: 0.85,
     fontSize: 12,
   },
+  hintSmall: {
+    marginTop: 8,
+    color: '#d7d2e8',
+    opacity: 0.85,
+    fontSize: 12,
+  },
 
   mysticBtn: {
     marginTop: 16,
@@ -525,6 +604,30 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     fontSize: 16,
   },
+
+  langGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  pill: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(214,166,59,0.35)',
+    backgroundColor: 'rgba(43, 31, 58, 0.55)',
+  },
+  pillActive: {
+    backgroundColor: '#321f47',
+    borderColor: 'rgba(214,166,59,0.85)',
+  },
+  pillText: {
+    color: '#e9e0ff',
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  pillTextActive: { color: '#fff' },
 });
 
 

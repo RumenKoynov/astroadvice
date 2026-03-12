@@ -29,19 +29,9 @@
         <category android:name="android.intent.category.LAUNCHER" />
     </intent-filter>
 
-    <!-- FB deep link inside MainActivity -->
-    <intent-filter>
-        <action android:name="android.intent.action.VIEW" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <category android:name="android.intent.category.BROWSABLE" />
-        <data android:scheme="fb641125565712949" />
-    </intent-filter>
 </activity>
 
 
-    <!-- FB SDK Meta-data -->
-    <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/>
-    <meta-data android:name="com.facebook.sdk.ClientToken" android:value="@string/facebook_client_token"/>
 </application>
 
 </manifest>

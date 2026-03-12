@@ -1,15 +1,25 @@
-// src/screens/HomeScreen.js
-import React from 'react';
+﻿// src/screens/HomeScreen.js
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ImageBackground, Pressable, SafeAreaView } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import AdBanner from '../components/ads/AdBanner';
 import { BANNER_HOME_AD_UNIT_ID } from '../config/admob';
+import { logEvent, logScreen } from '../services/analytics';
 
 export default function HomeScreen({ navigation }) {
   const { colors } = useTheme();
   const { t } = useTranslation('common');
+
+  useEffect(() => {
+    logScreen('Home');
+  }, []);
+
+  const openFeature = (feature, route) => {
+    logEvent('feature_opened', { feature });
+    navigation.navigate(route);
+  };
 
   return (
     <ImageBackground
@@ -23,12 +33,15 @@ export default function HomeScreen({ navigation }) {
       />
 
       <Pressable
-        onPress={() => navigation.navigate('Settings')}
+        onPress={() => {
+          logEvent('feature_opened', { feature: 'settings' });
+          navigation.navigate('Settings');
+        }}
         style={styles.settingsBtn}
         accessibilityRole="button"
         accessibilityLabel={t('settings') || 'Settings'}
       >
-        <Text style={styles.settingsBtnIcon}>⚙</Text>
+        <Text style={styles.settingsBtnIcon}>{'\u2699'}</Text>
       </Pressable>
 
       <SafeAreaView style={styles.safe}>
@@ -36,7 +49,7 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.title}>{t('home_title') || 'Choose your path'}</Text>
 
         <Pressable
-          onPress={() => navigation.navigate('StandartZodiac')}
+          onPress={() => openFeature('daily_advice', 'StandartZodiac')}
           style={[styles.card, { borderColor: 'rgba(255,215,0,0.35)' }]}
         >
           <Text style={styles.cardTitle}>{t('go_standard') || 'Daily Horoscope'}</Text>
@@ -44,7 +57,7 @@ export default function HomeScreen({ navigation }) {
         </Pressable>
 
         <Pressable
-          onPress={() => navigation.navigate('ChineseHoroscope')}
+          onPress={() => openFeature('chinese_horoscope', 'ChineseHoroscope')}
           style={[styles.card, { borderColor: 'rgba(255,64,129,0.35)' }]}
         >
           <Text style={styles.cardTitle}>{t('go_chinese') || 'Chinese Horoscope'}</Text>
@@ -52,21 +65,21 @@ export default function HomeScreen({ navigation }) {
         </Pressable>
 
         <Pressable
-          onPress={() => navigation.navigate('Number')}
+          onPress={() => openFeature('daily_number', 'Number')}
           style={[styles.card, { borderColor: 'rgba(164,69,255,0.45)' }]}
         >
           <Text style={styles.cardTitle}>{t('daily_number_title') || 'Your daily number'}</Text>
           <Text style={styles.cardHint}>{t('daily_number_hint') || 'Reveal a number for today'}</Text>
         </Pressable>
 
-<Pressable onPress={() => navigation.navigate('Tarot')} style={[styles.card, { borderColor: 'rgba(0,188,212,0.35)' }]}>
+<Pressable onPress={() => openFeature('tarot_single', 'Tarot')} style={[styles.card, { borderColor: 'rgba(0,188,212,0.35)' }]}>
   <Text style={styles.cardTitle}>{t('go_tarot') || 'Tarrot Card'}</Text>
   <Text style={styles.cardHint}>{t('go_tarot_hint') || 'Your daily tarrot card'}</Text>
 </Pressable>
 
-<Pressable onPress={() => navigation.navigate('ThreeTarot')} style={[styles.card, { borderColor: 'rgba(0,188,212,0.35)' }]}>
+<Pressable onPress={() => openFeature('tarot_three', 'ThreeTarot')} style={[styles.card, { borderColor: 'rgba(0,188,212,0.35)' }]}>
   <Text style={styles.cardTitle}>{t('tarot_three') || 'Tarot (3-Card Reading)'}</Text>
-  <Text style={styles.cardHint}>{t('tarot_three_hint') || 'Past • Present • Future'}</Text>
+  <Text style={styles.cardHint}>{t('tarot_three_hint') || 'Past â€¢ Present â€¢ Future'}</Text>
 </Pressable>
 
 
@@ -132,4 +145,5 @@ const styles = StyleSheet.create({
   cardTitle: { color: '#F3E5F5', fontSize: 18, fontWeight: '800', textAlign: 'center', marginBottom: 6 },
   cardHint: { color: '#E0DFF7', fontSize: 14, textAlign: 'center', opacity: 0.9 },
 });
+
 

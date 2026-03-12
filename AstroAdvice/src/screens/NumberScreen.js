@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AdEventType, RewardedAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
 import { BYPASS_DAILY_LIMITS } from '../config/featureFlags';
 import { AD_REQUEST_OPTIONS, REWARDED_NUMBER_AD_UNIT_ID } from '../config/admob';
+import { logEvent, logScreen } from '../services/analytics';
 
 const MIN_NUMBER = 1;
 const MAX_NUMBER = 50;
@@ -50,6 +51,11 @@ export default function NumberScreen({ navigation }) {
     () => RewardedAd.createForAdRequest(REWARDED_NUMBER_AD_UNIT_ID, AD_REQUEST_OPTIONS),
     []
   );
+
+  useEffect(() => {
+    logScreen('Number');
+    logEvent('feature_opened', { feature: 'daily_number' });
+  }, []);
 
   const hasFirst = numbers.length >= 1;
   const hasSecond = numbers.length >= 2;
@@ -151,6 +157,15 @@ export default function NumberScreen({ navigation }) {
         rewarded.load();
       }
     );
+    const unsubscribeOpened = rewarded.addAdEventListener(
+      AdEventType.OPENED,
+      () => {
+        logEvent('ad_impression_shown', {
+          placement: 'daily_number_rewarded',
+          ad_type: 'rewarded',
+        });
+      }
+    );
     const unsubscribeError = rewarded.addAdEventListener(
       AdEventType.ERROR,
       () => {
@@ -163,6 +178,7 @@ export default function NumberScreen({ navigation }) {
       unsubscribeLoaded();
       unsubscribeEarned();
       unsubscribeClosed();
+      unsubscribeOpened();
       unsubscribeError();
     };
   }, [rewarded, todayKey, i18n.language]);
@@ -211,6 +227,16 @@ export default function NumberScreen({ navigation }) {
         : (hasFirst ? [numbers[0], next] : [next]);
       setNumbers(nextNumbers);
       await persistState(nextNumbers, rewardUnlocked);
+      if (isSecondReveal) {
+        logEvent('daily_number_second_reveal', { lang: i18n.language, via_ad: 1 });
+      } else {
+        logEvent('daily_number_reveal', { lang: i18n.language });
+      }
+      logEvent('content_revealed', {
+        feature: 'daily_number',
+        lang: i18n.language,
+        is_second: isSecondReveal ? 1 : 0,
+      });
 
       const fade = isSecondReveal ? fade2 : fade1;
       const scale = isSecondReveal ? scale2 : scale1;

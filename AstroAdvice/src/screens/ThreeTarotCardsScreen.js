@@ -1,4 +1,4 @@
-// src/screens/ThreeTarotCardsScreen.js
+﻿// src/screens/ThreeTarotCardsScreen.js
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
@@ -22,6 +22,7 @@ import { useUser } from '../context/UserContext';
 import { BYPASS_DAILY_LIMITS } from '../config/featureFlags';
 import NativeAdCard from '../components/ads/NativeAdCard';
 import { NATIVE_THREE_TAROT_AD_UNIT_ID } from '../config/admob';
+import { logEvent, logScreen } from '../services/analytics';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const DATE_KEY = () => new Date().toISOString().slice(0, 10); // YYYY-MM-DD
@@ -30,6 +31,9 @@ export default function ThreeTarotCardsScreen({ navigation }) {
   const { t, i18n } = useTranslation('common');
   const user = useUser();
   const insets = useSafeAreaInsets();
+  const loggedScreenRef = useRef(false);
+  const loggedViewedRef = useRef(false);
+  const loggedGridRef = useRef(false);
 
   const todayKey = useMemo(() => DATE_KEY(), []);
   const savedRaw = user?.daily?.tarotThree?.[todayKey] || null;
@@ -69,6 +73,14 @@ export default function ThreeTarotCardsScreen({ navigation }) {
   }, []);
 
   useEffect(() => {
+    if (!loggedScreenRef.current) {
+      loggedScreenRef.current = true;
+      logScreen('ThreeTarot');
+      logEvent('feature_opened', { feature: 'tarot_three' });
+    }
+  }, []);
+
+  useEffect(() => {
     if (locked) {
       setPhase('locked');
       setCards(savedToday?.cards || []);
@@ -90,6 +102,35 @@ export default function ThreeTarotCardsScreen({ navigation }) {
   }, [locked, useSaved, savedToday?.reading, savedToday?.cards, i18n.language, phase]);
 
   useEffect(() => {
+    if (phase !== 'grid') {
+      loggedGridRef.current = false;
+    }
+    if (phase === 'grid' && cards.length === 3 && !loggedGridRef.current) {
+      loggedGridRef.current = true;
+      logEvent('content_viewed', {
+        feature: 'tarot_three',
+        lang: i18n.language,
+        is_cached: locked || useSaved ? 1 : 0,
+      });
+    }
+  }, [phase, cards.length, i18n.language, locked, useSaved]);
+
+  useEffect(() => {
+    if (!locked) {
+      loggedViewedRef.current = false;
+      return;
+    }
+    if (savedToday?.cards?.length === 3 && !loggedViewedRef.current) {
+      loggedViewedRef.current = true;
+      logEvent('content_viewed', {
+        feature: 'tarot_three',
+        lang: i18n.language,
+        is_cached: 1,
+      });
+    }
+  }, [locked, savedToday?.cards, i18n.language]);
+
+  useEffect(() => {
     if (locked || useSaved) return;
     setPhase('loading');
     setCards([]);
@@ -102,6 +143,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
   const draw = async () => {
     setPhase('loading');
     setErrorMsg('');
+    logEvent('tarot_three_draw_start', { lang: i18n.language });
     try {
       const data = await apiFetch(`/threetarotcards/draw?lang=${i18n.language}`, 'GET');
       const trio = Array.isArray(data?.cards) ? data.cards.slice(0, 3) : [];
@@ -112,6 +154,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
       setCards(trio);
       setReading('');
       setPhase('revealing');
+      logEvent('content_generated', { feature: 'tarot_three', lang: i18n.language });
       if (!bypass) {
         // Save cards immediately to prevent re-draw before reveal
         user.setDaily(todayKey, 'tarotThree', { cards: trio, reading: '', lang: i18n.language });
@@ -121,6 +164,8 @@ export default function ThreeTarotCardsScreen({ navigation }) {
       const startReveal = (idx = 0) => {
         if (!isActiveRef.current) return;
         setRevealIndex(idx);
+        const step = idx === 0 ? 'past' : idx === 1 ? 'present' : 'future';
+        logEvent('tarot_three_reveal_step', { step, lang: i18n.language });
         animateIn();
         const NEXT_DELAY_MS = 2300;
         setTimeout(() => {
@@ -134,6 +179,10 @@ export default function ThreeTarotCardsScreen({ navigation }) {
       if (!isActiveRef.current) return;
       setErrorMsg(e?.message || 'Failed to draw cards');
       setPhase('error');
+      logEvent('error_shown', {
+        feature: 'tarot_three',
+        code: String(e?.message || 'error').slice(0, 60),
+      });
     }
   };
 
@@ -157,10 +206,16 @@ export default function ThreeTarotCardsScreen({ navigation }) {
       const res = await apiFetch('/threetarotcards/reading', 'POST', payload);
       const text = res?.reading || '';
       setReading(text);
-      // Save reading for today → lock until tomorrow
+      logEvent('tarot_three_reading_generated', { lang: i18n.language });
+      logEvent('content_generated', { feature: 'tarot_three_reading', lang: i18n.language });
+      // Save reading for today â†’ lock until tomorrow
       user.setDaily(todayKey, 'tarotThree', { cards, reading: text, lang: i18n.language });
     } catch (e) {
       setErrorMsg(e?.message || 'Failed to generate reading');
+      logEvent('error_shown', {
+        feature: 'tarot_three_reading',
+        code: String(e?.message || 'error').slice(0, 60),
+      });
     } finally {
       setLoadingReading(false);
     }
@@ -605,7 +660,7 @@ const styles = StyleSheet.create({
   cellLabel: { marginTop: 6, color: '#fff', fontWeight: '700' },
   cellName: { marginTop: 2, color: '#fff', fontSize: 12, opacity: 0.95 },
 
-  /* Reading panel — outer ScrollView provides scrolling */
+  /* Reading panel â€” outer ScrollView provides scrolling */
   /* Card preview modal */
   modalBackdrop: {
     flex: 1,
@@ -699,6 +754,7 @@ const styles = StyleSheet.create({
   },
   mysticBtnText: { color: '#fff', fontWeight: '900', letterSpacing: 0.5, fontSize: 16 },
 });
+
 
 
 

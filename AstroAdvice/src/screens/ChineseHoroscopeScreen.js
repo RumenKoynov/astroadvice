@@ -22,6 +22,7 @@ import { useUser } from '../context/UserContext';
 import { apiFetch } from '../services/api';
 import { BYPASS_DAILY_LIMITS } from '../config/featureFlags';
 import { AD_REQUEST_OPTIONS, INTERSTITIAL_CHINESE_HOROSCOPE_AD_UNIT_ID } from '../config/admob';
+import { logEvent, logScreen } from '../services/analytics';
 
 const DATE_KEY = () => new Date().toISOString().slice(0, 10);
 const INTERSTITIAL_DAILY_KEY = 'astro_interstitial_chinese_v1';
@@ -37,6 +38,9 @@ export default function ChineseHoroscopeScreen({ navigation }) {
   );
   const [interstitialLoaded, setInterstitialLoaded] = useState(false);
   const interstitialShowingRef = useRef(false);
+  const loggedScreenRef = useRef(false);
+  const loggedSignRef = useRef(false);
+  const loggedHoroscopeRef = useRef(false);
 
   const sign = (user?.chineseSign || '').toLowerCase();
   const element = (user?.chineseElement || '').toLowerCase();
@@ -90,6 +94,14 @@ export default function ChineseHoroscopeScreen({ navigation }) {
   })();
 
   useEffect(() => {
+    if (!loggedScreenRef.current) {
+      loggedScreenRef.current = true;
+      logScreen('ChineseHoroscope');
+      logEvent('feature_opened', { feature: 'chinese_horoscope' });
+    }
+  }, []);
+
+  useEffect(() => {
     if (locked) {
       setPhase('locked');
       setHoroscope(savedToday?.horoscope || '');
@@ -100,8 +112,29 @@ export default function ChineseHoroscopeScreen({ navigation }) {
   }, [locked, savedToday?.horoscope, phase]);
 
   useEffect(() => {
+    if (!horoscope) {
+      loggedHoroscopeRef.current = false;
+      return;
+    }
+    if (!loggedHoroscopeRef.current) {
+      loggedHoroscopeRef.current = true;
+      logEvent('content_viewed', {
+        feature: 'chinese_horoscope',
+        lang: i18n.language,
+        is_cached: locked ? 1 : 0,
+      });
+    }
+  }, [horoscope, i18n.language, locked]);
+
+  useEffect(() => {
     const unsubLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
       setInterstitialLoaded(true);
+    });
+    const unsubOpened = interstitial.addAdEventListener(AdEventType.OPENED, () => {
+      logEvent('ad_impression_shown', {
+        placement: 'chinese_horoscope_interstitial',
+        ad_type: 'interstitial',
+      });
     });
     const unsubClosed = interstitial.addAdEventListener(AdEventType.CLOSED, () => {
       interstitialShowingRef.current = false;
@@ -116,6 +149,7 @@ export default function ChineseHoroscopeScreen({ navigation }) {
     interstitial.load();
     return () => {
       unsubLoaded();
+      unsubOpened();
       unsubClosed();
       unsubError();
     };
@@ -149,6 +183,7 @@ export default function ChineseHoroscopeScreen({ navigation }) {
         setSignData(null);
         setElemData(null);
         setHoroscope('');
+        loggedSignRef.current = false;
 
         const s = await apiFetch(
           `/chinese/${encodeURIComponent(sign)}?lang=${encodeURIComponent(i18n.language)}`,
@@ -156,6 +191,10 @@ export default function ChineseHoroscopeScreen({ navigation }) {
         );
         if (!active) return;
         setSignData(s);
+        if (!loggedSignRef.current) {
+          loggedSignRef.current = true;
+          logEvent('chinese_sign_selected', { sign, lang: i18n.language });
+        }
         if (s?.imageUrl) {
           try { await Image.prefetch(s.imageUrl); } catch {}
         }
@@ -172,6 +211,10 @@ export default function ChineseHoroscopeScreen({ navigation }) {
         if (!active) return;
         setErr(e?.message || 'Failed to load sign');
         setPhase('error');
+        logEvent('error_shown', {
+          feature: 'chinese_sign',
+          code: String(e?.message || 'error').slice(0, 60),
+        });
       }
     })();
 
@@ -191,6 +234,7 @@ export default function ChineseHoroscopeScreen({ navigation }) {
         'GET'
       );
       setElemData(d);
+      logEvent('content_revealed', { feature: 'chinese_element', lang: i18n.language });
       if (d?.imageUrl) {
         try { await Image.prefetch(d.imageUrl); } catch {}
       }
@@ -203,6 +247,10 @@ export default function ChineseHoroscopeScreen({ navigation }) {
       }).start(() => setPhase('element'));
     } catch (e) {
       setErr(e?.message || 'Failed to reveal element');
+      logEvent('error_shown', {
+        feature: 'chinese_element',
+        code: String(e?.message || 'error').slice(0, 60),
+      });
     }
   };
 
@@ -226,6 +274,8 @@ export default function ChineseHoroscopeScreen({ navigation }) {
         return;
       }
       setHoroscope(text);
+      logEvent('content_generated', { feature: 'chinese_horoscope', lang: i18n.language });
+      logEvent('chinese_horoscope_loaded', { sign, lang: i18n.language });
 
       const snapshot = {
         slug: `${sign}-${element}`,
@@ -239,6 +289,10 @@ export default function ChineseHoroscopeScreen({ navigation }) {
       setPhase('horoscope');
     } catch (e) {
       setErr(e?.message || 'Failed to get horoscope');
+      logEvent('error_shown', {
+        feature: 'chinese_horoscope',
+        code: String(e?.message || 'error').slice(0, 60),
+      });
     }
   };
 

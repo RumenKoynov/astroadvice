@@ -4,13 +4,13 @@ import { is_dev } from './featureFlags';
 const USE_TEST_ADS = is_dev;
 
 // Replace these with your real AdMob IDs before release.
-export const ADMOB_APP_ID_ANDROID = 'ca-app-pub-3940256099942544~3347511713';
+export const ADMOB_APP_ID_ANDROID = 'ca-app-pub-2990821699471312~5402965211';
 export const ADMOB_APP_ID_IOS = 'ca-app-pub-3940256099942544~1458002511';
 
-const PROD_BANNER_ID = 'ca-app-pub-xxxxxxxxxxxxxxxx/xxxxxxxxxx';
-const PROD_NATIVE_ID = 'ca-app-pub-xxxxxxxxxxxxxxxx/xxxxxxxxxx';
-const PROD_REWARDED_ID = 'ca-app-pub-xxxxxxxxxxxxxxxx/xxxxxxxxxx';
-const PROD_INTERSTITIAL_ID = 'ca-app-pub-xxxxxxxxxxxxxxxx/xxxxxxxxxx';
+const PROD_BANNER_ID = 'ca-app-pub-2990821699471312/2109423744';
+const PROD_NATIVE_ID = 'ca-app-pub-2990821699471312/1791023264';
+const PROD_REWARDED_ID = 'ca-app-pub-2990821699471312/4225614915';
+const PROD_INTERSTITIAL_ID = 'ca-app-pub-2990821699471312/1638504669';
 
 export const BANNER_HOME_AD_UNIT_ID = USE_TEST_ADS ? TestIds.BANNER : PROD_BANNER_ID;
 export const BANNER_SETTINGS_AD_UNIT_ID = USE_TEST_ADS ? TestIds.BANNER : PROD_BANNER_ID;

@@ -1,5 +1,5 @@
 // src/screens/StandartZodiacScreen.js
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { BYPASS_DAILY_LIMITS } from '../config/featureFlags';
 import { SIGN_ID_BY_EN } from '../i18n/zodiacMap';
 import NativeAdCard from '../components/ads/NativeAdCard';
 import { NATIVE_DAILY_HOROSCOPE_AD_UNIT_ID } from '../config/admob';
+import { logEvent, logScreen } from '../services/analytics';
 
 const DATE_KEY = () => new Date().toISOString().slice(0, 10);
 
@@ -42,6 +43,8 @@ export default function StandartZodiacScreen({ navigation }) {
   const { colors } = useTheme();
   const user = useUser();
   const insets = useSafeAreaInsets();
+  const loggedScreenRef = useRef(false);
+  const loggedViewedRef = useRef(false);
 
   const sign = user?.westernZodiac || '';
   const sex = user?.sex || '';
@@ -71,9 +74,32 @@ export default function StandartZodiacScreen({ navigation }) {
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
+    if (!loggedScreenRef.current) {
+      loggedScreenRef.current = true;
+      logScreen('StandartZodiac');
+      logEvent('feature_opened', { feature: 'daily_advice' });
+    }
+  }, []);
+
+  useEffect(() => {
     setAdvice(effectiveSaved?.text || '');
     setErrorMsg('');
   }, [effectiveSaved?.text, i18n.language]);
+
+  useEffect(() => {
+    if (!advice) {
+      loggedViewedRef.current = false;
+      return;
+    }
+    if (!loggedViewedRef.current) {
+      loggedViewedRef.current = true;
+      logEvent('content_viewed', {
+        feature: 'daily_advice',
+        lang: i18n.language,
+        is_cached: isLocked ? 1 : 0,
+      });
+    }
+  }, [advice, i18n.language, isLocked]);
 
   const isLocked = !BYPASS_DAILY_LIMITS && !!saved;
 
@@ -100,8 +126,13 @@ export default function StandartZodiacScreen({ navigation }) {
       setAdvice(text);
       // save for today (locks until tomorrow)
       user.setDaily(todayKey, 'advice', { sign, text, lang: i18n.language });
+      logEvent('content_generated', { feature: 'daily_advice', lang: i18n.language });
     } catch (e) {
       setErrorMsg(e?.message || 'Failed to fetch advice');
+      logEvent('error_shown', {
+        feature: 'daily_advice',
+        code: String(e?.message || 'error').slice(0, 60),
+      });
     } finally {
       setLoading(false);
     }
