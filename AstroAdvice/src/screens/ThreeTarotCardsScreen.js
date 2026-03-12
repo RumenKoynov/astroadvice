@@ -37,16 +37,15 @@ export default function ThreeTarotCardsScreen({ navigation }) {
 
   const todayKey = useMemo(() => DATE_KEY(), []);
   const savedRaw = user?.daily?.tarotThree?.[todayKey] || null;
-  const savedToday = savedRaw && savedRaw.lang === i18n.language ? savedRaw : null;
   const bypass = BYPASS_DAILY_LIMITS;
-  const useSaved = !bypass && !!savedToday;
-  const hasReading = useSaved && !!savedToday?.reading?.trim();
-  const locked = hasReading;
+  const useSaved = !bypass && !!savedRaw;
+  const hasReading = !!savedRaw?.reading?.trim();
+  const locked = useSaved && hasReading;
 
   // phases: 'locked' | 'loading' | 'revealing' | 'grid' | 'error'
   const [phase, setPhase] = useState(locked ? 'locked' : 'loading');
-  const [cards, setCards] = useState(savedToday?.cards || []);
-  const [reading, setReading] = useState(savedToday?.reading || '');
+  const [cards, setCards] = useState(savedRaw?.cards || []);
+  const [reading, setReading] = useState(savedRaw?.reading || '');
   const [errorMsg, setErrorMsg] = useState('');
   const [loadingReading, setLoadingReading] = useState(false);
   const [previewCard, setPreviewCard] = useState(null);
@@ -83,8 +82,8 @@ export default function ThreeTarotCardsScreen({ navigation }) {
   useEffect(() => {
     if (locked) {
       setPhase('locked');
-      setCards(savedToday?.cards || []);
-      setReading(savedToday?.reading || '');
+      setCards(savedRaw?.cards || []);
+      setReading(savedRaw?.reading || '');
       setRevealIndex(-1);
       setErrorMsg('');
       setLoadingReading(false);
@@ -93,13 +92,13 @@ export default function ThreeTarotCardsScreen({ navigation }) {
     if (useSaved) {
       if (phase === 'revealing') return;
       setPhase('grid');
-      setCards(savedToday?.cards || []);
-      setReading(savedToday?.reading || '');
+      setCards(savedRaw?.cards || []);
+      setReading(savedRaw?.reading || '');
       setRevealIndex(-1);
       setErrorMsg('');
       setLoadingReading(false);
     }
-  }, [locked, useSaved, savedToday?.reading, savedToday?.cards, i18n.language, phase]);
+  }, [locked, useSaved, savedRaw?.reading, savedRaw?.cards, phase]);
 
   useEffect(() => {
     if (phase !== 'grid') {
@@ -120,7 +119,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
       loggedViewedRef.current = false;
       return;
     }
-    if (savedToday?.cards?.length === 3 && !loggedViewedRef.current) {
+    if (savedRaw?.cards?.length === 3 && !loggedViewedRef.current) {
       loggedViewedRef.current = true;
       logEvent('content_viewed', {
         feature: 'tarot_three',
@@ -128,7 +127,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
         is_cached: 1,
       });
     }
-  }, [locked, savedToday?.cards, i18n.language]);
+  }, [locked, savedRaw?.cards, i18n.language]);
 
   useEffect(() => {
     if (locked || useSaved) return;
@@ -138,7 +137,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
     setRevealIndex(-1);
     setErrorMsg('');
     setLoadingReading(false);
-  }, [locked, useSaved, i18n.language]);
+  }, [locked, useSaved]);
 
   const draw = async () => {
     setPhase('loading');
@@ -191,7 +190,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
     if (locked || useSaved) return;
     draw();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i18n.language, locked]);
+  }, [locked, useSaved]);
 
   const onRevealTruth = async () => {
     if (cards.length !== 3) return;
@@ -316,7 +315,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
 
   /* ---------- LOCKED VIEW ---------- */
   if (phase === 'locked') {
-    const imgH = savedToday?.reading ? IMG_H * 0.82 : IMG_H;
+    const imgH = savedRaw?.reading ? IMG_H * 0.82 : IMG_H;
     return (
       <ImageBackground
         source={require('../../assets/images/three-tarot-background.jpg')}
@@ -374,7 +373,7 @@ export default function ThreeTarotCardsScreen({ navigation }) {
             >
               <View style={styles.gridWrap}>
                 <View style={styles.row}>
-                  {savedToday.cards?.slice(0, 2).map((c, i) => (
+                  {savedRaw?.cards?.slice(0, 2).map((c, i) => (
                     <TouchableOpacity
                       key={c.id || i}
                       style={styles.cell}
@@ -393,18 +392,18 @@ export default function ThreeTarotCardsScreen({ navigation }) {
                   <TouchableOpacity
                     style={styles.cell}
                     activeOpacity={0.9}
-                    onPress={() => openPreview(savedToday.cards?.[2])}
+                    onPress={() => openPreview(savedRaw?.cards?.[2])}
                   >
-                    <Image source={{ uri: savedToday.cards?.[2]?.imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
+                    <Image source={{ uri: savedRaw?.cards?.[2]?.imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
                     <Text style={styles.cellLabel}>{t('future') || 'Future'}</Text>
-                    <Text style={styles.cellName} numberOfLines={1}>{savedToday.cards?.[2]?.name}</Text>
+                    <Text style={styles.cellName} numberOfLines={1}>{savedRaw?.cards?.[2]?.name}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
 
-              {!!savedToday.reading && (
+              {!!savedRaw?.reading && (
                 <View style={styles.readingWrap}>
-                  <Text style={styles.readingText}>{savedToday.reading}</Text>
+                  <Text style={styles.readingText}>{savedRaw.reading}</Text>
                 </View>
               )}
 

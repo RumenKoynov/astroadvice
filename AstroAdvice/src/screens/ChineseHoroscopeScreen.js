@@ -47,14 +47,13 @@ export default function ChineseHoroscopeScreen({ navigation }) {
 
   const todayKey = useMemo(() => DATE_KEY(), []);
   const savedRaw = user?.daily?.chineseHoroscope?.[todayKey] || null;
-  const savedToday = savedRaw && savedRaw.lang === i18n.language ? savedRaw : null;
-  const locked = !BYPASS_DAILY_LIMITS && !!savedToday;
+  const locked = !BYPASS_DAILY_LIMITS && !!savedRaw;
 
   // phases: 'loading' | 'sign' | 'element' | 'horoscope' | 'locked' | 'error'
   const [phase, setPhase] = useState(locked ? 'locked' : 'loading');
   const [signData, setSignData] = useState(null); // { name, desc, imageUrl }
   const [elemData, setElemData] = useState(null); // { name, desc, imageUrl }
-  const [horoscope, setHoroscope] = useState(savedToday?.horoscope || '');
+  const [horoscope, setHoroscope] = useState(savedRaw?.horoscope || '');
   const [err, setErr] = useState('');
 
   // Animations
@@ -83,14 +82,14 @@ export default function ChineseHoroscopeScreen({ navigation }) {
   const signLabel = sign ? (t(sign) || sign) : '';
   const elementTitle = formatElementTitle(sign, element);
   const savedTitle = (() => {
-    const slug = savedToday?.slug || '';
+    const slug = savedRaw?.slug || '';
     if (slug.includes('-')) {
       const [savedSign, savedElement] = slug.split('-');
       if (savedSign && savedElement) {
         return formatElementTitle(savedSign, savedElement);
       }
     }
-    return savedToday?.name || '';
+    return savedRaw?.name || '';
   })();
 
   useEffect(() => {
@@ -104,12 +103,12 @@ export default function ChineseHoroscopeScreen({ navigation }) {
   useEffect(() => {
     if (locked) {
       setPhase('locked');
-      setHoroscope(savedToday?.horoscope || '');
+      setHoroscope(savedRaw?.horoscope || '');
     } else if (phase === 'locked') {
       setPhase('loading');
     }
     setErr('');
-  }, [locked, savedToday?.horoscope, phase]);
+  }, [locked, savedRaw?.horoscope, phase]);
 
   useEffect(() => {
     if (!horoscope) {
@@ -315,9 +314,9 @@ export default function ChineseHoroscopeScreen({ navigation }) {
               contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
               showsVerticalScrollIndicator={false}
             >
-              {!!savedToday?.imageUrl && (
+              {!!savedRaw?.imageUrl && (
                 <Image
-                  source={{ uri: savedToday.imageUrl }}
+                  source={{ uri: savedRaw.imageUrl }}
                   style={styles.mainImg}
                   resizeMode="contain"
                 />
@@ -327,18 +326,18 @@ export default function ChineseHoroscopeScreen({ navigation }) {
                 <Text style={styles.titleText}>{savedTitle}</Text>
               )}
 
-              {!!savedToday?.desc && (
+              {!!savedRaw?.desc && (
                 <View style={styles.card}>
-                  <Text style={styles.cardText}>{savedToday.desc}</Text>
+                  <Text style={styles.cardText}>{savedRaw.desc}</Text>
                 </View>
               )}
 
-              {!!savedToday?.horoscope && (
+              {!!savedRaw?.horoscope && (
                 <View style={styles.card}>
                   <Text style={styles.cardHeader}>
                     {t('todays_horoscope') || "Today's horoscope"}
                   </Text>
-                  <Text style={styles.cardText}>{savedToday.horoscope}</Text>
+                  <Text style={styles.cardText}>{savedRaw.horoscope}</Text>
                 </View>
               )}
             </ScrollView>

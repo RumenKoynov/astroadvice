@@ -3,7 +3,7 @@ const router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const chinese = require('../data/chineseDescriptions'); // { rat:{name,desc}, 'rat-water':{...} }
-const { groqComplete } = require('../lib/groq');
+const { openaiComplete } = require('../lib/openai');
 const { normalizeLang } = require('../lib/lang');
 
 const ELEMENT_DESC = {
@@ -87,7 +87,7 @@ async function generateChineseDaily({ sign, element, lang }) {
     'Write 4-5 sentences, <= 95 words, no bullet lists, no emojis.',
   ].join(' ');
 
-  const text = await groqComplete({
+  const text = await openaiComplete({
     system,
     user,
     temperature: 0.8,

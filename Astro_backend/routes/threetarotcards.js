@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const router = express.Router();
 const tarot = require('../data/tarotDescriptions');
-const { groqComplete } = require('../lib/groq');
+const { openaiComplete } = require('../lib/openai');
 const { normalizeLang } = require('../lib/lang');
 
 const SECTION_LABELS = {
@@ -140,7 +140,7 @@ Tone: warm, oracular, slightly enigmatic yet actionable. No emojis, no bullet li
 
     let reading = '';
     try {
-      reading = await groqComplete({
+      reading = await openaiComplete({
         system,
         user,
         temperature: 0.95,

@@ -66,7 +66,7 @@ export default function StandardZodiacScreen({ navigation }) {
 
   const todayKey = useMemo(() => DATE_KEY(), []);
   const savedRaw = user?.daily?.advice?.[todayKey] || null;
-  const saved = savedRaw && savedRaw.lang === i18n.language ? savedRaw : null;
+  const saved = savedRaw || null; // lock per-day regardless of language
   const effectiveSaved = BYPASS_DAILY_LIMITS ? null : saved;
 
   const [advice, setAdvice] = useState(effectiveSaved?.text || '');
@@ -84,7 +84,7 @@ export default function StandardZodiacScreen({ navigation }) {
   useEffect(() => {
     setAdvice(effectiveSaved?.text || '');
     setErrorMsg('');
-  }, [effectiveSaved?.text, i18n.language]);
+  }, [effectiveSaved?.text]);
 
   useEffect(() => {
     if (!advice) {
@@ -101,7 +101,7 @@ export default function StandardZodiacScreen({ navigation }) {
     }
   }, [advice, i18n.language, isLocked]);
 
-  const isLocked = !BYPASS_DAILY_LIMITS && !!saved;
+  const isLocked = !BYPASS_DAILY_LIMITS && !!savedRaw;
 
   const bgSource = zodiacBg[sign] || require('../../assets/images/std-horoscope-bg.jpg');
   const signId = sign ? (SIGN_ID_BY_EN[sign] || sign.toLowerCase()) : '';
@@ -166,9 +166,9 @@ export default function StandardZodiacScreen({ navigation }) {
             showsVerticalScrollIndicator={false}
           >
             {/* Advice text (saved or fetched) */}
-            {!!(advice || (isLocked && saved?.text)) && (
+            {!!(advice || (isLocked && savedRaw?.text)) && (
               <View style={styles.card}>
-                <Text style={styles.cardText}>{advice || saved?.text || ''}</Text>
+                <Text style={styles.cardText}>{advice || savedRaw?.text || ''}</Text>
               </View>
             )}
 

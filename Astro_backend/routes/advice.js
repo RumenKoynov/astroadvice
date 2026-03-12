@@ -1,6 +1,6 @@
 ﻿const express = require('express');
 const router = express.Router();
-const { groqComplete } = require('../lib/groq');
+const { openaiComplete } = require('../lib/openai');
 const { normalizeLang } = require('../lib/lang');
 
 const MIN_WORDS = 160;
@@ -20,7 +20,7 @@ const countWords = (s) => s.split(/\s+/).filter(Boolean).length;
 const inRange = (n) => n >= MIN_WORDS && n <= MAX_WORDS;
 
 async function generateAdvice({ sign, lang, sex, age }) {
-  if (!process.env.GROQ_API_KEY) {
+  if (!process.env.OPENAI_API_KEY) {
     return FALLBACKS[lang] || FALLBACKS.en;
   }
 
@@ -36,7 +36,7 @@ async function generateAdvice({ sign, lang, sex, age }) {
     `Return only the horoscope text; no headings or word counts.\n` +
     `If you fall outside ${MIN_WORDS}-${MAX_WORDS} words, revise to fit the range.`;
 
-  let advice = await groqComplete({
+  let advice = await openaiComplete({
     system,
     user,
     temperature: 0.9,
@@ -55,7 +55,7 @@ async function generateAdvice({ sign, lang, sex, age }) {
       `Keep the same language and tone. Keep 3-4 concrete suggestions and a brief morning/afternoon/evening outlook. ` +
       `No health or financial claims. Return only the revised horoscope.\n\n${advice}`;
 
-    const adjusted = await groqComplete({
+    const adjusted = await openaiComplete({
       system,
       user: adjustUser,
       temperature: retries >= 2 ? 0.6 : 0.8,

@@ -38,13 +38,12 @@ export default function TarotScreen({ navigation }) {
 
   const todayKey = useMemo(() => DATE_KEY(), []);
   const savedRaw = user?.daily?.tarotSingle?.[todayKey] || null;
-  const savedToday = savedRaw && savedRaw.lang === i18n.language ? savedRaw : null;
-  const hasSaved = !!savedToday;
+  const hasSaved = !!savedRaw;
   const enforceLimit = !BYPASS_DAILY_LIMITS;
   const locked = enforceLimit && hasSaved;
   const showLocked = hasSaved;
 
-  const [card, setCard] = useState(savedToday?.card || null);
+  const [card, setCard] = useState(savedRaw?.card || null);
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState(showLocked ? 'locked' : 'idle'); // idle | showing | locked
   const [errorMsg, setErrorMsg] = useState('');
@@ -97,22 +96,22 @@ export default function TarotScreen({ navigation }) {
   }, []);
 
   useEffect(() => {
-    if (showLocked && savedToday?.card) {
-      setCard(savedToday.card);
+    if (showLocked && savedRaw?.card) {
+      setCard(savedRaw.card);
       setPhase('locked');
     } else {
       setCard(null);
       setPhase('idle');
     }
     setErrorMsg('');
-  }, [showLocked, savedToday?.card, i18n.language]);
+  }, [showLocked, savedRaw?.card]);
 
   useEffect(() => {
     if (!showLocked) {
       loggedViewedRef.current = false;
       return;
     }
-    if (savedToday?.card && !loggedViewedRef.current) {
+    if (savedRaw?.card && !loggedViewedRef.current) {
       loggedViewedRef.current = true;
       logEvent('content_viewed', {
         feature: 'tarot_single',
@@ -120,7 +119,7 @@ export default function TarotScreen({ navigation }) {
         is_cached: 1,
       });
     }
-  }, [showLocked, savedToday?.card, i18n.language]);
+  }, [showLocked, savedRaw?.card, i18n.language]);
 
   const drawCard = async ({ stayLocked = false } = {}) => {
     setErrorMsg('');
@@ -225,21 +224,21 @@ export default function TarotScreen({ navigation }) {
               contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
               showsVerticalScrollIndicator={false}
             >
-              {!!savedToday?.card?.imageUrl && (
-                <TouchableOpacity activeOpacity={0.9} onPress={() => openPreview(savedToday.card)}>
+              {!!savedRaw?.card?.imageUrl && (
+                <TouchableOpacity activeOpacity={0.9} onPress={() => openPreview(savedRaw.card)}>
                   <Image
-                    source={{ uri: savedToday.card.imageUrl }}
+                    source={{ uri: savedRaw.card.imageUrl }}
                     style={styles.cardImgLocked}
                     resizeMode="contain"
                   />
                 </TouchableOpacity>
               )}
-              {!!savedToday?.card?.name && (
-                <Text style={styles.cardTitle}>{savedToday.card.name}</Text>
+              {!!savedRaw?.card?.name && (
+                <Text style={styles.cardTitle}>{savedRaw.card.name}</Text>
               )}
-              {!!savedToday?.card?.description && (
+              {!!savedRaw?.card?.description && (
                 <View style={styles.cardPanel}>
-                  <Text style={styles.cardText}>{savedToday.card.description}</Text>
+                  <Text style={styles.cardText}>{savedRaw.card.description}</Text>
                 </View>
               )}
             </ScrollView>
