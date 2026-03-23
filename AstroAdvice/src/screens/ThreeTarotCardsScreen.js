@@ -13,7 +13,10 @@ import {
   Dimensions,
   ScrollView,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
+import ViewShot, { captureRef } from 'react-native-view-shot';
+import Share from 'react-native-share';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -21,8 +24,13 @@ import { apiFetch } from '../services/api';
 import { useUser } from '../context/UserContext';
 import { BYPASS_DAILY_LIMITS } from '../config/featureFlags';
 import NativeAdCard from '../components/ads/NativeAdCard';
-import { NATIVE_THREE_TAROT_AD_UNIT_ID } from '../config/admob';
+import {
+  NATIVE_THREE_TAROT_AD_UNIT_ID,
+  NATIVE_THREE_TAROT_READING_AD_UNIT_ID_1,
+  NATIVE_THREE_TAROT_READING_AD_UNIT_ID_2,
+} from '../config/admob';
 import { logEvent, logScreen } from '../services/analytics';
+import { PLAY_STORE_URL_ANDROID } from '../config/env';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const DATE_KEY = () => new Date().toISOString().slice(0, 10); // YYYY-MM-DD
@@ -51,6 +59,8 @@ export default function ThreeTarotCardsScreen({ navigation }) {
   const [previewCard, setPreviewCard] = useState(null);
   const previewAnim = useRef(new Animated.Value(0)).current;
   const isActiveRef = useRef(true);
+  const shareShotRef = useRef(null);
+  const [shareLoading, setShareLoading] = useState(false);
 
   // Reveal state (fullscreen one-by-one)
   const [revealIndex, setRevealIndex] = useState(-1);
@@ -220,7 +230,70 @@ export default function ThreeTarotCardsScreen({ navigation }) {
     }
   };
 
+  const splitReadingParts = (text) => {
+    if (!text) return [];
+    const parts = text
+      .split(/\n\s*\n/g)
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (parts.length >= 3) return parts.slice(0, 3);
+    return [text.trim()];
+  };
+
+  const renderReadingWithAds = (text) => {
+    const parts = splitReadingParts(text);
+    if (!parts.length) return null;
+    if (parts.length < 3) {
+      return (
+        <View style={styles.readingWrap}>
+          <Text style={styles.readingText}>{text}</Text>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.readingWrap}>
+        <Text style={styles.readingText}>{parts[0]}</Text>
+        <View style={styles.readingAd}>
+          <NativeAdCard unitId={NATIVE_THREE_TAROT_READING_AD_UNIT_ID_1} />
+        </View>
+        <Text style={styles.readingText}>{parts[1]}</Text>
+        <View style={styles.readingAd}>
+          <NativeAdCard unitId={NATIVE_THREE_TAROT_READING_AD_UNIT_ID_2} />
+        </View>
+        <Text style={styles.readingText}>{parts[2]}</Text>
+      </View>
+    );
+  };
+
   const showRevealBtn = phase === 'grid' && !locked && (!reading || reading.trim().length === 0);
+  const shareLabel = t('share_facebook') || 'Share to Facebook';
+  const shareSpreadText = (past, present, future) =>
+    t('share_tarot_three', { past, present, future })
+    || `My tarot spread: Past ${past}, Present ${present}, Future ${future}.`;
+  const shareAppText =
+    t('share_app', { url: PLAY_STORE_URL_ANDROID }) || `AstroAdvice: ${PLAY_STORE_URL_ANDROID}`;
+
+  const onShareThree = async () => {
+    if (cards.length < 3 || !shareShotRef.current || shareLoading) return;
+    setShareLoading(true);
+    const past = cards[0]?.name || '';
+    const present = cards[1]?.name || '';
+    const future = cards[2]?.name || '';
+    const message = [shareSpreadText(past, present, future), shareAppText].filter(Boolean).join('\n');
+    try {
+      const uri = await captureRef(shareShotRef, {
+        format: 'png',
+        quality: 0.9,
+        result: 'tmpfile',
+      });
+      const url = uri.startsWith('file://') ? uri : `file://${uri}`;
+      await Share.open({ message, url });
+      logEvent('content_shared', { feature: 'tarot_three', lang: i18n.language, channel: 'facebook' });
+    } catch {}
+    finally {
+      setShareLoading(false);
+    }
+  };
   const openPreview = (card) => {
     if (!card) return;
     setPreviewCard(card);
@@ -274,41 +347,46 @@ export default function ThreeTarotCardsScreen({ navigation }) {
       contentContainerStyle={{ paddingHorizontal: PANEL_PAD, paddingTop: 12, paddingBottom: 120 }} // space for footer button
       showsVerticalScrollIndicator
     >
-      <View style={styles.gridWrap}>
-        <View style={styles.row}>
-          {cards.slice(0, 2).map((c, i) => (
+      <ViewShot ref={shareShotRef} options={{ format: 'png', quality: 0.9 }}>
+        <View style={styles.gridWrap}>
+          <View style={styles.row}>
+            {cards.slice(0, 2).map((c, i) => (
+              <TouchableOpacity
+                key={c.id || i}
+                style={styles.cell}
+                activeOpacity={0.9}
+                onPress={() => openPreview(c)}
+              >
+                <Image source={{ uri: c.imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
+                <Text style={styles.cellLabel}>{i === 0 ? (t('past') || 'Past') : (t('present') || 'Present')}</Text>
+                <Text style={styles.cellName} numberOfLines={1}>{c.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View style={[styles.row, { justifyContent: 'center' }]}>
             <TouchableOpacity
-              key={c.id || i}
               style={styles.cell}
               activeOpacity={0.9}
-              onPress={() => openPreview(c)}
+              onPress={() => openPreview(cards[2])}
             >
-              <Image source={{ uri: c.imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
-              <Text style={styles.cellLabel}>{i === 0 ? (t('past') || 'Past') : (t('present') || 'Present')}</Text>
-              <Text style={styles.cellName} numberOfLines={1}>{c.name}</Text>
+              <Image source={{ uri: cards[2].imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
+              <Text style={styles.cellLabel}>{t('future') || 'Future'}</Text>
+              <Text style={styles.cellName} numberOfLines={1}>{cards[2].name}</Text>
             </TouchableOpacity>
-          ))}
-        </View>
-        <View style={[styles.row, { justifyContent: 'center' }]}>
-          <TouchableOpacity
-            style={styles.cell}
-            activeOpacity={0.9}
-            onPress={() => openPreview(cards[2])}
-          >
-            <Image source={{ uri: cards[2].imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
-            <Text style={styles.cellLabel}>{t('future') || 'Future'}</Text>
-            <Text style={styles.cellName} numberOfLines={1}>{cards[2].name}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {!!reading && (
-          <View style={styles.readingWrap}>
-            <Text style={styles.readingText}>{reading}</Text>
           </View>
-        )}
+        </View>
+      </ViewShot>
 
-        <NativeAdCard unitId={NATIVE_THREE_TAROT_AD_UNIT_ID} />
-      </View>
+      {loadingReading && (
+        <View style={styles.loadingRow}>
+          <ActivityIndicator size="large" color="#ffe7c2" />
+          <Text style={styles.loadingText}>{t('loading') || 'Loading...'}</Text>
+        </View>
+      )}
+
+      {!!reading && renderReadingWithAds(reading)}
+
+      <NativeAdCard unitId={NATIVE_THREE_TAROT_AD_UNIT_ID} />
     </ScrollView>
     );
   };
@@ -371,46 +449,49 @@ export default function ThreeTarotCardsScreen({ navigation }) {
               contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
               showsVerticalScrollIndicator
             >
-              <View style={styles.gridWrap}>
-                <View style={styles.row}>
-                  {savedRaw?.cards?.slice(0, 2).map((c, i) => (
+              <ViewShot ref={shareShotRef} options={{ format: 'png', quality: 0.9 }}>
+                <View style={styles.gridWrap}>
+                  <View style={styles.row}>
+                    {savedRaw?.cards?.slice(0, 2).map((c, i) => (
+                      <TouchableOpacity
+                        key={c.id || i}
+                        style={styles.cell}
+                        activeOpacity={0.9}
+                        onPress={() => openPreview(c)}
+                      >
+                        <Image source={{ uri: c.imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
+                        <Text style={styles.cellLabel}>
+                          {i === 0 ? (t('past') || 'Past') : (t('present') || 'Present')}
+                        </Text>
+                        <Text style={styles.cellName} numberOfLines={1}>{c.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <View style={[styles.row, { justifyContent: 'center' }]}>
                     <TouchableOpacity
-                      key={c.id || i}
                       style={styles.cell}
                       activeOpacity={0.9}
-                      onPress={() => openPreview(c)}
+                      onPress={() => openPreview(savedRaw?.cards?.[2])}
                     >
-                      <Image source={{ uri: c.imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
-                      <Text style={styles.cellLabel}>
-                        {i === 0 ? (t('past') || 'Past') : (t('present') || 'Present')}
-                      </Text>
-                      <Text style={styles.cellName} numberOfLines={1}>{c.name}</Text>
+                      <Image source={{ uri: savedRaw?.cards?.[2]?.imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
+                      <Text style={styles.cellLabel}>{t('future') || 'Future'}</Text>
+                      <Text style={styles.cellName} numberOfLines={1}>{savedRaw?.cards?.[2]?.name}</Text>
                     </TouchableOpacity>
-                  ))}
+                  </View>
                 </View>
-                <View style={[styles.row, { justifyContent: 'center' }]}>
-                  <TouchableOpacity
-                    style={styles.cell}
-                    activeOpacity={0.9}
-                    onPress={() => openPreview(savedRaw?.cards?.[2])}
-                  >
-                    <Image source={{ uri: savedRaw?.cards?.[2]?.imageUrl }} style={[styles.cellImg, { height: imgH }]} resizeMode="contain" />
-                    <Text style={styles.cellLabel}>{t('future') || 'Future'}</Text>
-                    <Text style={styles.cellName} numberOfLines={1}>{savedRaw?.cards?.[2]?.name}</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
+              </ViewShot>
 
-              {!!savedRaw?.reading && (
-                <View style={styles.readingWrap}>
-                  <Text style={styles.readingText}>{savedRaw.reading}</Text>
-                </View>
-              )}
+              {!!savedRaw?.reading && renderReadingWithAds(savedRaw.reading)}
 
               <NativeAdCard unitId={NATIVE_THREE_TAROT_AD_UNIT_ID} />
             </ScrollView>
 
             <View style={[styles.bottomBar, { zIndex: 10, paddingBottom: 20 + insets.bottom }]}>
+              <FacebookButton
+                label={shareLoading ? (t('loading') || 'Loading...') : shareLabel}
+                onPress={onShareThree}
+                disabled={shareLoading}
+              />
               <MysticButton
                 label={t('back') || 'Back'}
                 onPress={() =>
@@ -473,7 +554,10 @@ export default function ThreeTarotCardsScreen({ navigation }) {
           </Modal>
           <View style={[styles.main, phase !== 'grid' && styles.centered]}>
             {phase === 'loading' && (
-              <DrawingIndicator label={t('drawing_cards') || 'Drawing cards...'} />
+              <View style={styles.loadingRow}>
+                <ActivityIndicator size="large" color="#ffe7c2" />
+                <Text style={styles.loadingText}>{t('loading') || 'Loading...'}</Text>
+              </View>
             )}
 
             {phase === 'revealing' && <FullscreenReveal />}
@@ -501,12 +585,19 @@ export default function ThreeTarotCardsScreen({ navigation }) {
               />
             ) : (
               phase === 'grid' && (
-                <MysticButton
-                  label={t('back') || 'Back'}
-                  onPress={() =>
-                    navigation?.canGoBack?.() ? navigation.goBack() : navigation.navigate('Home')
-                  }
-                />
+                <>
+                  <FacebookButton
+                    label={shareLoading ? (t('loading') || 'Loading...') : shareLabel}
+                    onPress={onShareThree}
+                    disabled={loadingReading || shareLoading}
+                  />
+                  <MysticButton
+                    label={t('back') || 'Back'}
+                    onPress={() =>
+                      navigation?.canGoBack?.() ? navigation.goBack() : navigation.navigate('Home')
+                    }
+                  />
+                </>
               )
             )}
           </View>
@@ -531,52 +622,16 @@ function MysticButton({ label, onPress, disabled }) {
   );
 }
 
-/* ---------- Drawing Indicator ---------- */
-function DrawingIndicator({ label }) {
-  const spin = useRef(new Animated.Value(0)).current;
-  const pulse = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const spinAnim = Animated.loop(
-      Animated.timing(spin, {
-        toValue: 1,
-        duration: 1200,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    );
-    const pulseAnim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 700, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0, duration: 700, easing: Easing.in(Easing.quad), useNativeDriver: true }),
-      ])
-    );
-    spinAnim.start();
-    pulseAnim.start();
-    return () => {
-      spinAnim.stop();
-      pulseAnim.stop();
-    };
-  }, [spin, pulse]);
-
-  const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
-  const glowScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] });
-  const glowOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0.7] });
-
+function FacebookButton({ label, onPress, disabled }) {
   return (
-    <View style={styles.loaderWrap}>
-      <View style={styles.loaderOrb}>
-        <Animated.View
-          style={[
-            styles.loaderGlow,
-            { opacity: glowOpacity, transform: [{ scale: glowScale }] },
-          ]}
-        />
-        <Animated.View style={[styles.loaderSpinner, { transform: [{ rotate }] }]} />
-        <View style={styles.loaderCore} />
-      </View>
-      <Text style={styles.loadingText}>{label}</Text>
-    </View>
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={onPress}
+      disabled={disabled}
+      style={[styles.fbBtn, disabled && styles.fbBtnDisabled]}
+    >
+      <Text style={styles.fbBtnText}>{label}</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -605,42 +660,14 @@ const styles = StyleSheet.create({
     marginTop: 10,
     color: '#fff2d2',
     opacity: 0.95,
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '700',
     letterSpacing: 0.4,
   },
-  loaderWrap: {
+  loadingRow: {
+    marginTop: 6,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loaderOrb: {
-    width: 56,
-    height: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loaderGlow: {
-    position: 'absolute',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255,210,98,0.18)',
-  },
-  loaderSpinner: {
-    position: 'absolute',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 2,
-    borderColor: 'rgba(255,210,98,0.85)',
-    borderTopColor: 'rgba(255,210,98,0.08)',
-    borderRightColor: 'rgba(255,210,98,0.22)',
-  },
-  loaderCore: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#ffd262',
+    gap: 8,
   },
   errorText: { color: '#ffdede', textAlign: 'center', fontSize: 13, marginTop: 8 },
 
@@ -720,6 +747,9 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   readingText: { color: '#fff', fontSize: 16, lineHeight: 22, textAlign: 'center' },
+  readingAd: {
+    marginVertical: 10,
+  },
 
   /* Footer */
   bottomBar: { padding: 16, paddingBottom: 20 },
@@ -752,6 +782,24 @@ const styles = StyleSheet.create({
     opacity: 0.35,
   },
   mysticBtnText: { color: '#fff', fontWeight: '900', letterSpacing: 0.5, fontSize: 16 },
+  fbBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 24,
+    backgroundColor: '#1877F2',
+    borderWidth: 1,
+    borderColor: '#1667d6',
+  },
+  fbBtnDisabled: {
+    opacity: 0.6,
+  },
+  fbBtnText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 15,
+    letterSpacing: 0.3,
+  },
 });
 
 

@@ -1,4 +1,4 @@
-// src/screens/StandardZodiacScreen.js
+﻿// src/screens/StandardZodiacScreen.js
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   View,
@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +23,7 @@ import { logEvent, logScreen } from '../services/analytics';
 
 const DATE_KEY = () => new Date().toISOString().slice(0, 10);
 
-// map capitalized sign → local image require
+// map capitalized sign â†’ local image require
 const zodiacBg = {
   Aries: require('../../assets/images/Aries.png'),
   Taurus: require('../../assets/images/Taurus.png'),
@@ -66,10 +67,15 @@ export default function StandardZodiacScreen({ navigation }) {
 
   const todayKey = useMemo(() => DATE_KEY(), []);
   const savedRaw = user?.daily?.advice?.[todayKey] || null;
-  const saved = savedRaw || null; // lock per-day regardless of language
-  const effectiveSaved = BYPASS_DAILY_LIMITS ? null : saved;
+  const ageKey = typeof age === 'number' ? age : Number(age || '');
+  const matchContext = !!savedRaw
+    && savedRaw.sign === sign
+    && savedRaw.sex === sex
+    && savedRaw.lang === i18n.language
+    && Number(savedRaw.age) === (Number.isFinite(ageKey) ? ageKey : Number(savedRaw.age));
+  const effectiveSaved = BYPASS_DAILY_LIMITS ? null : (matchContext ? savedRaw : null);
 
-  const [advice, setAdvice] = useState(effectiveSaved?.text || '');
+  const [advice, setAdvice] = useState(effectiveSaved?.advice || effectiveSaved?.text || '');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -82,9 +88,9 @@ export default function StandardZodiacScreen({ navigation }) {
   }, []);
 
   useEffect(() => {
-    setAdvice(effectiveSaved?.text || '');
+    setAdvice(effectiveSaved?.advice || effectiveSaved?.text || '');
     setErrorMsg('');
-  }, [effectiveSaved?.text]);
+  }, [effectiveSaved?.advice, effectiveSaved?.text]);
 
   useEffect(() => {
     if (!advice) {
@@ -101,7 +107,7 @@ export default function StandardZodiacScreen({ navigation }) {
     }
   }, [advice, i18n.language, isLocked]);
 
-  const isLocked = !BYPASS_DAILY_LIMITS && !!savedRaw;
+  const isLocked = !BYPASS_DAILY_LIMITS && !!effectiveSaved;
 
   const bgSource = zodiacBg[sign] || require('../../assets/images/std-horoscope-bg.jpg');
   const signId = sign ? (SIGN_ID_BY_EN[sign] || sign.toLowerCase()) : '';
@@ -122,10 +128,18 @@ export default function StandardZodiacScreen({ navigation }) {
         age: String(age || ''),
       }).toString();
       const data = await apiFetch(`/getDailyAdvice?${qs}`, 'GET');
-      const text = data?.advice || '';
+      const text = data?.advice || [data?.base, data?.personalized].filter(Boolean).join('\\n\\n');
       setAdvice(text);
-      // save for today (locks until tomorrow)
-      user.setDaily(todayKey, 'advice', { sign, text, lang: i18n.language });
+      // save for today (locks until tomorrow, invalidated by sign/age/sex/lang)
+      user.setDaily(todayKey, 'advice', {
+        sign,
+        age: Number.isFinite(ageKey) ? ageKey : '',
+        sex,
+        lang: i18n.language,
+        base: data?.base || '',
+        personalized: data?.personalized || '',
+        advice: text,
+      });
       logEvent('content_generated', { feature: 'daily_advice', lang: i18n.language });
     } catch (e) {
       setErrorMsg(e?.message || 'Failed to fetch advice');
@@ -166,9 +180,15 @@ export default function StandardZodiacScreen({ navigation }) {
             showsVerticalScrollIndicator={false}
           >
             {/* Advice text (saved or fetched) */}
-            {!!(advice || (isLocked && savedRaw?.text)) && (
+            {loading && (
+              <View style={styles.loadingRow}>
+              <ActivityIndicator size="large" color="#ffe7c2" />
+              <Text style={styles.loadingText}>{t('loading') || 'Loading...'}</Text>
+            </View>
+            )}
+            {!!(advice || (isLocked && (savedRaw?.advice || savedRaw?.text))) && (
               <View style={styles.card}>
-                <Text style={styles.cardText}>{advice || savedRaw?.text || ''}</Text>
+                <Text style={styles.cardText}>{advice || savedRaw?.advice || savedRaw?.text || ''}</Text>
               </View>
             )}
 
@@ -266,6 +286,16 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 13,
   },
+  loadingRow: {
+    marginTop: 10,
+    alignItems: 'center',
+    gap: 8,
+  },
+  loadingText: {
+    color: '#ffe7c2',
+    fontWeight: '700',
+    fontSize: 16,
+  },
 
   mysticBtn: {
     position: 'relative',
@@ -290,6 +320,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+
 
 
 

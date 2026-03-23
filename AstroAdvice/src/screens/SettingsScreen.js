@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
   Switch,
   ImageBackground,
+  NativeModules,
+  Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +24,8 @@ export default function SettingsScreen({ navigation }) {
   const { t, i18n } = useTranslation('common');
   const user = useUser();
   const [isDeveloper, setIsDeveloper] = useState(false);
+  const [showPrivacyOptions, setShowPrivacyOptions] = useState(false);
+  const { UMPConsent } = NativeModules;
 
   const langs = useMemo(
     () => [
@@ -52,6 +56,22 @@ export default function SettingsScreen({ navigation }) {
   useEffect(() => {
     logScreen('Settings');
   }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !UMPConsent?.getPrivacyOptionsRequirementStatus) {
+      return;
+    }
+    let active = true;
+    UMPConsent.getPrivacyOptionsRequirementStatus()
+      .then((status) => {
+        if (!active) return;
+        setShowPrivacyOptions(status === 'REQUIRED');
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [UMPConsent]);
 
   useEffect(() => {
     if (!is_dev) return;
@@ -89,6 +109,16 @@ export default function SettingsScreen({ navigation }) {
     try {
       user.clearDaily();
       await AsyncStorage.removeItem('astro_daily_number_v1');
+    } catch {
+      // no-op
+    }
+  };
+
+  const openPrivacyOptions = async () => {
+    if (!UMPConsent?.showPrivacyOptionsForm) return;
+    try {
+      await UMPConsent.showPrivacyOptionsForm();
+      logEvent('privacy_options_opened', { source: 'settings' });
     } catch {
       // no-op
     }
@@ -138,6 +168,15 @@ export default function SettingsScreen({ navigation }) {
             {t('language_applies_immediately') || 'Changes apply immediately.'}
           </Text>
         </Section>
+
+        {showPrivacyOptions && (
+          <Section title={t('privacy', { defaultValue: 'Privacy' })}>
+            <MysticButton
+              label={t('privacy_settings', { defaultValue: 'Privacy Settings' })}
+              onPress={openPrivacyOptions}
+            />
+          </Section>
+        )}
 
         {/* Debug (dev builds only) */}
         {is_dev && (

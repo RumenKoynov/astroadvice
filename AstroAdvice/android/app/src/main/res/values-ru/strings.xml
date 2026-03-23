@@ -1,0 +1,6 @@
+<resources>
+    <string name="notification_title">AstroAdvice</string>
+    <string name="notification_text">Ваш ежедневный гороскоп и расклад таро готовы ✨</string>
+    <string name="notification_channel_name">Ежедневные прогнозы</string>
+    <string name="notification_channel_desc">Ежедневные напоминания о гороскопе и таро.</string>
+</resources>

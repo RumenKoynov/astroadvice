@@ -24,8 +24,16 @@ export async function logEvent(name, params) {
   }
 }
 
+let lastScreenName = null;
+let lastScreenTs = 0;
+
 export async function logScreen(name) {
   try {
+    if (!name) return;
+    const now = Date.now();
+    if (lastScreenName === name && now - lastScreenTs < 1500) return;
+    lastScreenName = name;
+    lastScreenTs = now;
     await analytics().logScreenView({ screen_name: name, screen_class: name });
   } catch {
     // no-op

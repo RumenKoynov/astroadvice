@@ -1,6 +1,6 @@
 ﻿// src/screens/HomeScreen.js
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ImageBackground, Pressable, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, Pressable, SafeAreaView, ScrollView } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -45,7 +45,7 @@ export default function HomeScreen({ navigation }) {
       </Pressable>
 
       <SafeAreaView style={styles.safe}>
-        <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>{t('home_title') || 'Choose your path'}</Text>
 
         <Pressable
@@ -54,6 +54,30 @@ export default function HomeScreen({ navigation }) {
         >
           <Text style={styles.cardTitle}>{t('go_standard') || 'Daily Horoscope'}</Text>
           <Text style={styles.cardHint}>{t('go_standard_hint') || 'Short, fun guidance for today'}</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => openFeature('tarot_single', 'Tarot')}
+          style={[styles.card, { borderColor: 'rgba(0,188,212,0.35)' }]}
+        >
+          <Text style={styles.cardTitle}>{t('go_tarot') || 'Tarot Card'}</Text>
+          <Text style={styles.cardHint}>{t('go_tarot_hint') || 'Your daily tarot card'}</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => openFeature('tarot_three', 'ThreeTarot')}
+          style={[styles.card, { borderColor: 'rgba(0,188,212,0.35)' }]}
+        >
+          <Text style={styles.cardTitle}>{t('tarot_three') || 'Tarot (3-Card Reading)'}</Text>
+          <Text style={styles.cardHint}>{t('tarot_three_hint') || 'Past • Present • Future'}</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => openFeature('weekly_compatibility', 'WeeklyCompatibility')}
+          style={[styles.card, { borderColor: 'rgba(255,120,180,0.35)' }]}
+        >
+          <Text style={styles.cardTitle}>{t('go_compat') || 'Weekly Compatibility'}</Text>
+          <Text style={styles.cardHint}>{t('go_compat_hint') || 'See this week’s alignment for two signs'}</Text>
         </Pressable>
 
         <Pressable
@@ -72,19 +96,25 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.cardHint}>{t('daily_number_hint') || 'Reveal a number for today'}</Text>
         </Pressable>
 
-<Pressable onPress={() => openFeature('tarot_single', 'Tarot')} style={[styles.card, { borderColor: 'rgba(0,188,212,0.35)' }]}>
-  <Text style={styles.cardTitle}>{t('go_tarot') || 'Tarrot Card'}</Text>
-  <Text style={styles.cardHint}>{t('go_tarot_hint') || 'Your daily tarrot card'}</Text>
-</Pressable>
+        <Pressable
+          onPress={() => openFeature('movie_quotes', 'MovieQuotes')}
+          style={[styles.card, { borderColor: 'rgba(255,210,98,0.35)' }]}
+        >
+          <Text style={styles.cardTitle}>{t('go_movies') || 'Movie Quotes'}</Text>
+          <Text style={styles.cardHint}>{t('go_movies_hint') || 'A famous quote for today'}</Text>
+        </Pressable>
 
-<Pressable onPress={() => openFeature('tarot_three', 'ThreeTarot')} style={[styles.card, { borderColor: 'rgba(0,188,212,0.35)' }]}>
-  <Text style={styles.cardTitle}>{t('tarot_three') || 'Tarot (3-Card Reading)'}</Text>
-  <Text style={styles.cardHint}>{t('tarot_three_hint') || 'Past â€¢ Present â€¢ Future'}</Text>
-</Pressable>
+        <Pressable
+          onPress={() => openFeature('learn_tarot', 'LearnTarot')}
+          style={[styles.card, { borderColor: 'rgba(255,171,64,0.35)' }]}
+        >
+          <Text style={styles.cardTitle}>{t('learn_tarot_title') || 'Learn Tarot'}</Text>
+          <Text style={styles.cardHint}>{t('learn_tarot_hint') || 'Card meanings, keywords, and a quiz'}</Text>
+        </Pressable>
 
 
 
-        </View>
+        </ScrollView>
         <AdBanner unitId={BANNER_HOME_AD_UNIT_ID} />
       </SafeAreaView>
     </ImageBackground>
@@ -96,11 +126,9 @@ const styles = StyleSheet.create({
   overlay: { ...StyleSheet.absoluteFillObject },
   safe: { flex: 1 },
   container: {
-    flex: 1,
     paddingHorizontal: 18,
     paddingTop: 24,
     paddingBottom: 24,
-    justifyContent: 'center',
     gap: 18,
   },
   title: {
@@ -145,6 +173,3 @@ const styles = StyleSheet.create({
   cardTitle: { color: '#F3E5F5', fontSize: 18, fontWeight: '800', textAlign: 'center', marginBottom: 6 },
   cardHint: { color: '#E0DFF7', fontSize: 14, textAlign: 'center', opacity: 0.9 },
 });
-
-
-

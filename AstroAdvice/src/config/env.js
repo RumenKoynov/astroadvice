@@ -9,3 +9,4 @@ const ENV_OVERRIDE =
   (typeof process !== 'undefined' && process.env && process.env.ASTRO_API_URL) || null;
 
 export const API_URL = GLOBAL_OVERRIDE || ENV_OVERRIDE || DEFAULT_API_URL;
+export const PLAY_STORE_URL_ANDROID = 'https://play.google.com/store/apps/details?id=com.astroadvice';

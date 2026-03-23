@@ -1,0 +1,6 @@
+<resources>
+    <string name="notification_title">AstroAdvice</string>
+    <string name="notification_text">Günlük burç yorumun ve tarot okuman hazır ✨</string>
+    <string name="notification_channel_name">Günlük yorumlar</string>
+    <string name="notification_channel_desc">Günlük burç ve tarot hatırlatmaları.</string>
+</resources>

@@ -1,0 +1,6 @@
+<resources>
+    <string name="notification_title">AstroAdvice</string>
+    <string name="notification_text">Dein tägliches Horoskop und deine Tarot-Lesung sind bereit ✨</string>
+    <string name="notification_channel_name">Tägliche Deutungen</string>
+    <string name="notification_channel_desc">Tägliche Erinnerungen an Horoskop und Tarot.</string>
+</resources>

@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">AstroAdvice</string>
+    <string name="notification_title">AstroAdvice</string>
+    <string name="notification_text">Your daily horoscope and tarot reading are ready ✨</string>
+    <string name="notification_channel_name">Daily readings</string>
+    <string name="notification_channel_desc">Daily horoscope and tarot reminders.</string>
 </resources>

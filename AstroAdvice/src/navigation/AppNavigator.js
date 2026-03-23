@@ -14,6 +14,10 @@ import ChineseHoroscopeScreen from '../screens/ChineseHoroscopeScreen';
 import TarotScreen from '../screens/TarotScreen';
 import ThreeTarotCardsScreen from '../screens/ThreeTarotCardsScreen';
 import NumberScreen from '../screens/NumberScreen';
+import LearnTarotScreen from '../screens/LearnTarotScreen';
+import TarotCardDetailScreen from '../screens/TarotCardDetailScreen';
+import WeeklyCompatibilityScreen from '../screens/WeeklyCompatibilityScreen';
+import MovieQuotesScreen from '../screens/MovieQuotesScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -109,6 +113,26 @@ export default function AppNavigator() {
         name="ThreeTarot"
         component={ThreeTarotCardsScreen}
         options={{ title: t('three_cards') || 'Three Cards' , headerShown: false}}
+      />
+      <Stack.Screen
+        name="LearnTarot"
+        component={LearnTarotScreen}
+        options={{ title: t('learn_tarot_title') || 'Learn Tarot', headerShown: false }}
+      />
+      <Stack.Screen
+        name="WeeklyCompatibility"
+        component={WeeklyCompatibilityScreen}
+        options={{ title: t('go_compat') || 'Weekly Compatibility', headerShown: false }}
+      />
+      <Stack.Screen
+        name="MovieQuotes"
+        component={MovieQuotesScreen}
+        options={{ title: t('movie_quotes_title') || 'Movie Quotes', headerShown: false }}
+      />
+      <Stack.Screen
+        name="TarotCardDetail"
+        component={TarotCardDetailScreen}
+        options={{ title: t('learn_tarot_title') || 'Learn Tarot', headerShown: false }}
       />
     </Stack.Navigator>
   );

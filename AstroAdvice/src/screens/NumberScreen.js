@@ -1,14 +1,17 @@
 // src/screens/NumberScreen.js
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ImageBackground,
   SafeAreaView,
+  ScrollView,
   Animated,
   Easing,
   TouchableOpacity,
+  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
@@ -16,8 +19,10 @@ import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AdEventType, RewardedAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
 import { BYPASS_DAILY_LIMITS } from '../config/featureFlags';
-import { AD_REQUEST_OPTIONS, REWARDED_NUMBER_AD_UNIT_ID } from '../config/admob';
+import { AD_REQUEST_OPTIONS, REWARDED_NUMBER_AD_UNIT_ID, BANNER_NUMBER_AD_UNIT_ID } from '../config/admob';
 import { logEvent, logScreen } from '../services/analytics';
+import { apiFetch } from '../services/api';
+import AdBanner from '../components/ads/AdBanner';
 
 const MIN_NUMBER = 1;
 const MAX_NUMBER = 50;
@@ -36,7 +41,9 @@ export default function NumberScreen({ navigation }) {
   const [spinningIndex, setSpinningIndex] = useState(null);
   const [spinValue1, setSpinValue1] = useState(null);
   const [spinValue2, setSpinValue2] = useState(null);
+  const [readingMap, setReadingMap] = useState({});
   const enforceLimit = !BYPASS_DAILY_LIMITS;
+  const langKey = (i18n.language || 'en').split('-')[0];
 
   const fade1 = useRef(new Animated.Value(0)).current;
   const scale1 = useRef(new Animated.Value(0.92)).current;
@@ -120,6 +127,10 @@ export default function NumberScreen({ navigation }) {
       if (spinIntervalRef.current) clearInterval(spinIntervalRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    setReadingMap({});
+  }, [langKey]);
 
   const persistState = async (nextNumbers, nextRewardUnlocked) => {
     try {
@@ -294,6 +305,7 @@ export default function NumberScreen({ navigation }) {
   const watchAdLabel = t('watch_ad_for_second_number') || 'Watch an ad for a second number';
   const revealSecondLabel = t('reveal_second_number') || 'Reveal second number';
   const unlockedLabel = t('second_number_unlocked') || 'Second number unlocked';
+  const loadingLabel = t('loading') || 'Loading...';
 
   const showRewardButton = enforceLimit && hasFirst && !hasSecond && !rewardUnlocked;
   const showUnlockedBanner = enforceLimit && hasFirst && !hasSecond && rewardUnlocked;
@@ -311,6 +323,44 @@ export default function NumberScreen({ navigation }) {
   const primaryAction = (!hasFirst || !enforceLimit || canRevealSecond)
     ? revealNumber
     : () => navigation.goBack();
+  const readingKey = useCallback((value) => `${value}:${langKey}`, [langKey]);
+  const fetchReading = useCallback(async (value) => {
+    const key = readingKey(value);
+    try {
+      const data = await apiFetch(`/number/${value}?lang=${encodeURIComponent(langKey)}`);
+      setReadingMap((prev) => (prev[key]
+        ? prev
+        : {
+            ...prev,
+            [key]: {
+              title: data?.title,
+              meaning: data?.meaning,
+              advice: data?.advice,
+            },
+          }));
+    } catch {}
+  }, [langKey, readingKey]);
+
+  useEffect(() => {
+    if (!numbers.length) return;
+    numbers.forEach((value) => {
+      if (typeof value !== 'number') return;
+      const key = readingKey(value);
+      if (!readingMap[key]) {
+        fetchReading(value);
+      }
+    });
+  }, [numbers, readingMap, readingKey, fetchReading]);
+
+  const showReadingFirst = hasFirst && !(isSpinning && spinningIndex === 0);
+  const showReadingSecond = hasSecond && !(isSpinning && spinningIndex === 1);
+  const getReading = (value) => {
+    if (typeof value !== 'number') return null;
+    const entry = readingMap[readingKey(value)];
+    return entry || null;
+  };
+  const readingFirst = showReadingFirst ? getReading(numbers[0]) : null;
+  const readingSecond = showReadingSecond ? getReading(numbers[1]) : null;
 
   return (
     <ImageBackground
@@ -325,30 +375,44 @@ export default function NumberScreen({ navigation }) {
 
       <SafeAreaView style={styles.safe}>
         <View style={styles.root}>
-          <View style={styles.centerArea}>
+          <View style={{ paddingTop: Math.max(insets.top, 8) }}>
+            <AdBanner unitId={BANNER_NUMBER_AD_UNIT_ID} placement="daily_number_top_banner" />
+          </View>
+          <ScrollView
+            style={styles.centerArea}
+            contentContainerStyle={[
+              styles.centerContent,
+              { paddingBottom: 140 + insets.bottom },
+            ]}
+            showsVerticalScrollIndicator={false}
+          >
             <Text style={styles.title}>{title}</Text>
             <Text style={styles.subtitle}>{hint}</Text>
             {showLockedBanner && <Text style={styles.banner}>{lockedBanner}</Text>}
             {showUnlockedBanner && <Text style={styles.bannerAlt}>{unlockedLabel}</Text>}
 
             <View style={[styles.orbWrap, showSecondOrb && styles.orbWrapDouble]}>
-              <NumberOrb
-                value={displayFirst}
-                fade={fade1}
-                scale={scale1}
-                pulse={pulse1}
-              />
+                <NumberOrb
+                  value={displayFirst}
+                  fade={fade1}
+                  scale={scale1}
+                  pulse={pulse1}
+                  reading={readingFirst}
+                  loadingLabel={loadingLabel}
+                />
               {showSecondOrb && (
                 <NumberOrb
                   value={displaySecond}
                   fade={fade2}
                   scale={scale2}
                   pulse={pulse2}
+                  reading={readingSecond}
+                  loadingLabel={loadingLabel}
                 />
               )}
             </View>
 
-          </View>
+          </ScrollView>
 
           <View style={[styles.bottomBar, { paddingBottom: 24 + insets.bottom }]}>
             {showRewardButton && (
@@ -371,38 +435,54 @@ export default function NumberScreen({ navigation }) {
   );
 }
 
-function NumberOrb({ value, fade, scale, pulse }) {
+function NumberOrb({ value, fade, scale, pulse, reading, loadingLabel }) {
   const empty = typeof value !== 'number';
+  const loadingReading = !empty && !reading;
   return (
-    <View style={styles.orbSlot}>
-      <Animated.View
-        style={[
-          styles.orbGlow,
-          {
-            opacity: empty
-              ? 0.35
-              : pulse.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.75] }),
-            transform: [
-              {
-                scale: empty
-                  ? 1
-                  : pulse.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1.08] }),
-              },
-            ],
-          },
-        ]}
-      />
-      <Animated.View
-        style={[
-          styles.orb,
-          {
-            opacity: empty ? 0.7 : fade,
-            transform: [{ scale: empty ? 1 : scale }],
-          },
-        ]}
-      >
-        <Text style={styles.numberText}>{empty ? '-' : value}</Text>
-      </Animated.View>
+    <View style={styles.orbColumn}>
+      <View style={styles.orbSlot}>
+        <Animated.View
+          style={[
+            styles.orbGlow,
+            {
+              opacity: empty
+                ? 0.35
+                : pulse.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.75] }),
+              transform: [
+                {
+                  scale: empty
+                    ? 1
+                    : pulse.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1.08] }),
+                },
+              ],
+            },
+          ]}
+        />
+        <Animated.View
+          style={[
+            styles.orb,
+            {
+              opacity: empty ? 0.7 : fade,
+              transform: [{ scale: empty ? 1 : scale }],
+            },
+          ]}
+        >
+          <Text style={styles.numberText}>{empty ? '-' : value}</Text>
+        </Animated.View>
+      </View>
+      {reading && (
+        <View style={styles.readingCard}>
+          <Text style={styles.readingTitle}>{reading.title}</Text>
+          <Text style={styles.readingMeaning}>{reading.meaning}</Text>
+          <Text style={styles.readingAdvice}>{reading.advice}</Text>
+        </View>
+      )}
+      {loadingReading && (
+        <View style={styles.readingCard}>
+          <ActivityIndicator size="large" color="#ffe7c2" />
+          <Text style={styles.readingLoadingText}>{loadingLabel}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -425,16 +505,19 @@ function MysticButton({ label, onPress, disabled, variant = 'primary' }) {
   );
 }
 
-  const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   bg: { flex: 1 },
   overlay: { ...StyleSheet.absoluteFillObject },
   safe: { flex: 1 },
   root: { flex: 1 },
   centerArea: {
     flex: 1,
+  },
+  centerContent: {
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     paddingHorizontal: 18,
+    paddingTop: 8,
   },
   title: {
     color: '#f6e9ff',
@@ -468,14 +551,19 @@ function MysticButton({ label, onPress, disabled, variant = 'primary' }) {
     letterSpacing: 0.2,
   },
   orbWrap: {
-    width: 220,
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 16,
-    height: 220,
   },
   orbWrapDouble: {
-    height: 380,
+    gap: 20,
+    paddingTop: 6,
+  },
+  orbColumn: {
+    width: '100%',
+    alignItems: 'center',
+    maxWidth: 340,
   },
   orbSlot: {
     width: 220,
@@ -512,6 +600,50 @@ function MysticButton({ label, onPress, disabled, variant = 'primary' }) {
     textShadowColor: 'rgba(0,0,0,0.45)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 10,
+  },
+  readingCard: {
+    width: '100%',
+    marginTop: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 18,
+    backgroundColor: 'rgba(18, 10, 30, 0.65)',
+    borderWidth: 1,
+    borderColor: 'rgba(210, 165, 255, 0.28)',
+  },
+  readingTitle: {
+    color: '#f8e8ff',
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textAlign: 'center',
+    fontFamily: Platform.select({ ios: 'Palatino', android: 'serif' }),
+    textTransform: 'uppercase',
+  },
+  readingMeaning: {
+    color: '#e7d7f7',
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 8,
+    textAlign: 'center',
+    fontFamily: Platform.select({ ios: 'Georgia', android: 'serif' }),
+    fontStyle: 'italic',
+  },
+  readingAdvice: {
+    color: '#ffd9a8',
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 10,
+    textAlign: 'center',
+    fontWeight: '600',
+    fontFamily: Platform.select({ ios: 'Georgia', android: 'serif' }),
+  },
+  readingLoadingText: {
+    marginTop: 8,
+    color: '#ffe7c2',
+    fontWeight: '700',
+    textAlign: 'center',
+    fontSize: 15,
   },
   bottomBar: {
     padding: 16,

@@ -21,11 +21,14 @@
     "react": "18.2.0",
     "react-i18next": "^15.6.1",
     "react-native": "0.77.1",
+    "react-native-device-info": "^15.0.2",
     "react-native-google-mobile-ads": "^14.2.1",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-localize": "^3.7.0",
     "react-native-safe-area-context": "^5.7.0",
-    "react-native-screens": "^4.13.1"
+    "react-native-screens": "^4.13.1",
+    "react-native-share": "^12.2.6",
+    "react-native-view-shot": "^4.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

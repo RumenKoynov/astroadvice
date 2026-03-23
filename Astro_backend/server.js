@@ -7,8 +7,13 @@ const adviceRoutes = require('./routes/advice');
 const tarotRoutes = require('./routes/tarot');
 const threeTarotRoutes = require('./routes/threetarotcards');
 const chineseRoutes = require('./routes/chinese');
+const numberRoutes = require('./routes/number');
+const weeklyCompatibilityRoutes = require('./routes/weeklyCompatibility');
+const appConfigRoutes = require('./routes/appConfig');
+const moviesRoutes = require('./routes/movies');
 
 const app = express();
+app.set('trust proxy', true);
 app.use(cors());
 app.use(express.json());
 
@@ -21,9 +26,13 @@ app.get('/health', (req, res) => res.json({ ok: true }));
 
 // Public routes
 app.use('/', adviceRoutes);                 // GET /getDailyAdvice
+app.use('/', numberRoutes);                 // GET /number/:value
 app.use('/tarot', tarotRoutes);             // /tarot/random
 app.use('/threetarotcards', threeTarotRoutes); // /threetarotcards/draw + /reading
 app.use('/chinese', chineseRoutes);         // /chinese/:slug + /daily
+app.use('/', weeklyCompatibilityRoutes);   // GET /compatibility/weekly
+app.use('/', appConfigRoutes);             // GET /app-config
+app.use('/movies', moviesRoutes);          // GET /movies/quote
 
 // 404
 app.use((req, res) => res.status(404).json({ message: 'Not found' }));

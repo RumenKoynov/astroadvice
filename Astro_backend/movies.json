@@ -1,0 +1,1041 @@
+[
+  {
+    "id": 1,
+    "year": 1972,
+    "movie": {
+      "en": "The Godfather",
+      "bg": "Кръстникът",
+      "tr": "Baba",
+      "es": "El Padrino",
+      "ru": "Крёстный отец",
+      "it": "Il Padrino",
+      "de": "Der Pate",
+      "fr": "Le Parrain"
+    },
+    "actors": {
+      "en": ["Marlon Brando", "Al Pacino"],
+      "bg": ["Марлон Брандо", "Ал Пачино"],
+      "tr": ["Marlon Brando", "Al Pacino"],
+      "es": ["Marlon Brando", "Al Pacino"],
+      "ru": ["Марлон Брандо", "Аль Пачино"],
+      "it": ["Marlon Brando", "Al Pacino"],
+      "de": ["Marlon Brando", "Al Pacino"],
+      "fr": ["Marlon Brando", "Al Pacino"]
+    },
+    "quote": {
+      "en": "I'm gonna make him an offer he can't refuse.",
+      "bg": "Ще му направя предложение, на което не може да откаже.",
+      "tr": "Ona reddedemeyeceği bir teklif yapacağım.",
+      "es": "Le haré una oferta que no podrá rechazar.",
+      "ru": "Я сделаю ему предложение, от которого он не сможет отказаться.",
+      "it": "Gli farò un'offerta che non potrà rifiutare.",
+      "de": "Ich werde ihm ein Angebot machen, das er nicht ablehnen kann.",
+      "fr": "Je vais lui faire une offre qu'il ne pourra pas refuser."
+    }
+  },
+  {
+    "id": 2,
+    "year": 1997,
+    "movie": {
+      "en": "Titanic",
+      "bg": "Титаник",
+      "tr": "Titanik",
+      "es": "Titanic",
+      "ru": "Титаник",
+      "it": "Titanic",
+      "de": "Titanic",
+      "fr": "Titanic"
+    },
+    "actors": {
+      "en": ["Leonardo DiCaprio", "Kate Winslet"],
+      "bg": ["Леонардо ДиКаприо", "Кейт Уинслет"],
+      "tr": ["Leonardo DiCaprio", "Kate Winslet"],
+      "es": ["Leonardo DiCaprio", "Kate Winslet"],
+      "ru": ["Леонардо Ди Каприо", "Кейт Уинслет"],
+      "it": ["Leonardo DiCaprio", "Kate Winslet"],
+      "de": ["Leonardo DiCaprio", "Kate Winslet"],
+      "fr": ["Leonardo DiCaprio", "Kate Winslet"]
+    },
+    "quote": {
+      "en": "I'm the king of the world!",
+      "bg": "Аз съм кралят на света!",
+      "tr": "Ben dünyanın kralıyım!",
+      "es": "¡Soy el rey del mundo!",
+      "ru": "Я король мира!",
+      "it": "Sono il re del mondo!",
+      "de": "Ich bin der König der Welt!",
+      "fr": "Je suis le roi du monde !"
+    }
+  },
+  {
+    "id": 3,
+    "year": 1994,
+    "movie": {
+      "en": "Forrest Gump",
+      "bg": "Форест Гъмп",
+      "tr": "Forrest Gump",
+      "es": "Forrest Gump",
+      "ru": "Форрест Гамп",
+      "it": "Forrest Gump",
+      "de": "Forrest Gump",
+      "fr": "Forrest Gump"
+    },
+    "actors": {
+      "en": ["Tom Hanks"],
+      "bg": ["Том Ханкс"],
+      "tr": ["Tom Hanks"],
+      "es": ["Tom Hanks"],
+      "ru": ["Том Хэнкс"],
+      "it": ["Tom Hanks"],
+      "de": ["Tom Hanks"],
+      "fr": ["Tom Hanks"]
+    },
+    "quote": {
+      "en": "Life is like a box of chocolates.",
+      "bg": "Животът е като кутия с шоколадови бонбони.",
+      "tr": "Hayat bir kutu çikolata gibidir.",
+      "es": "La vida es como una caja de chocolates.",
+      "ru": "Жизнь как коробка шоколадных конфет.",
+      "it": "La vita è come una scatola di cioccolatini.",
+      "de": "Das Leben ist wie eine Schachtel Pralinen.",
+      "fr": "La vie, c'est comme une boîte de chocolats."
+    }
+  },
+
+  {
+    "id": 4,
+    "year": 2008,
+    "movie": {
+      "en": "The Dark Knight",
+      "bg": "Черният рицар",
+      "tr": "Kara Şövalye",
+      "es": "El caballero oscuro",
+      "ru": "Тёмный рыцарь",
+      "it": "Il cavaliere oscuro",
+      "de": "Der dunkle Ritter",
+      "fr": "Le Chevalier noir"
+    },
+    "actors": {
+      "en": ["Christian Bale", "Heath Ledger"],
+      "bg": ["Крисчън Бейл", "Хийт Леджър"],
+      "tr": ["Christian Bale", "Heath Ledger"],
+      "es": ["Christian Bale", "Heath Ledger"],
+      "ru": ["Кристиан Бейл", "Хит Леджер"],
+      "it": ["Christian Bale", "Heath Ledger"],
+      "de": ["Christian Bale", "Heath Ledger"],
+      "fr": ["Christian Bale", "Heath Ledger"]
+    },
+    "quote": {
+      "en": "Why so serious?",
+      "bg": "Защо толкова сериозно?",
+      "tr": "Neden bu kadar ciddisin?",
+      "es": "¿Por qué tan serio?",
+      "ru": "Почему так серьёзно?",
+      "it": "Perché così serio?",
+      "de": "Warum so ernst?",
+      "fr": "Pourquoi si sérieux ?"
+    }
+  },
+
+  {
+    "id": 5,
+    "year": 2000,
+    "movie": {
+      "en": "Gladiator",
+      "bg": "Гладиатор",
+      "tr": "Gladyatör",
+      "es": "Gladiador",
+      "ru": "Гладиатор",
+      "it": "Il Gladiatore",
+      "de": "Gladiator",
+      "fr": "Gladiator"
+    },
+    "actors": {
+      "en": ["Russell Crowe"],
+      "bg": ["Ръсел Кроу"],
+      "ru": ["Рассел Кроу"],
+      "tr": ["Russell Crowe"],
+      "es": ["Russell Crowe"],
+      "it": ["Russell Crowe"],
+      "de": ["Russell Crowe"],
+      "fr": ["Russell Crowe"]
+    },
+    "quote": {
+      "en": "Are you not entertained?",
+      "bg": "Не сте ли забавлявани?",
+      "tr": "Eğlenmediniz mi?",
+      "es": "¿No os entretenéis?",
+      "ru": "Разве вам не весело?",
+      "it": "Non vi divertite?",
+      "de": "Seid ihr nicht unterhalten?",
+      "fr": "Vous n'êtes pas divertis ?"
+    }
+  },
+
+  {
+    "id": 6,
+    "year": 1977,
+    "movie": {
+      "en": "Star Wars",
+      "bg": "Междузвездни войни",
+      "tr": "Yıldız Savaşları",
+      "es": "La guerra de las galaxias",
+      "ru": "Звёздные войны",
+      "it": "Guerre stellari",
+      "de": "Krieg der Sterne",
+      "fr": "La Guerre des étoiles"
+    },
+    "actors": {
+      "en": ["Mark Hamill", "Harrison Ford"],
+      "bg": ["Марк Хамил", "Харисън Форд"],
+      "ru": ["Марк Хэмилл", "Харрисон Форд"],
+      "tr": ["Mark Hamill", "Harrison Ford"],
+      "es": ["Mark Hamill", "Harrison Ford"],
+      "it": ["Mark Hamill", "Harrison Ford"],
+      "de": ["Mark Hamill", "Harrison Ford"],
+      "fr": ["Mark Hamill", "Harrison Ford"]
+    },
+    "quote": {
+      "en": "May the Force be with you.",
+      "bg": "Нека Силата бъде с теб.",
+      "tr": "Güç seninle olsun.",
+      "es": "Que la Fuerza te acompañe.",
+      "ru": "Да пребудет с тобой Сила.",
+      "it": "Che la Forza sia con te.",
+      "de": "Möge die Macht mit dir sein.",
+      "fr": "Que la Force soit avec toi."
+    }
+  },
+
+  {
+    "id": 7,
+    "year": 1999,
+    "movie": {
+      "en": "The Matrix",
+      "bg": "Матрицата",
+      "tr": "Matrix",
+      "es": "Matrix",
+      "ru": "Матрица",
+      "it": "Matrix",
+      "de": "Matrix",
+      "fr": "Matrix"
+    },
+    "actors": {
+      "en": ["Keanu Reeves"],
+      "bg": ["Киану Рийвс"],
+      "ru": ["Киану Ривз"],
+      "tr": ["Keanu Reeves"],
+      "es": ["Keanu Reeves"],
+      "it": ["Keanu Reeves"],
+      "de": ["Keanu Reeves"],
+      "fr": ["Keanu Reeves"]
+    },
+    "quote": {
+      "en": "There is no spoon.",
+      "bg": "Няма лъжица.",
+      "tr": "Kaşık yok.",
+      "es": "No hay cuchara.",
+      "ru": "Ложки не существует.",
+      "it": "Non esiste il cucchiaio.",
+      "de": "Es gibt keinen Löffel.",
+      "fr": "Il n'y a pas de cuillère."
+    }
+  },
+
+  {
+    "id": 8,
+    "year": 1976,
+    "movie": {
+      "en": "Rocky",
+      "bg": "Роки",
+      "tr": "Rocky",
+      "es": "Rocky",
+      "ru": "Рокки",
+      "it": "Rocky",
+      "de": "Rocky",
+      "fr": "Rocky"
+    },
+    "actors": {
+      "en": ["Sylvester Stallone"],
+      "bg": ["Силвестър Сталоун"],
+      "ru": ["Сильвестр Сталлоне"],
+      "tr": ["Sylvester Stallone"],
+      "es": ["Sylvester Stallone"],
+      "it": ["Sylvester Stallone"],
+      "de": ["Sylvester Stallone"],
+      "fr": ["Sylvester Stallone"]
+    },
+    "quote": {
+      "en": "It's not about how hard you hit.",
+      "bg": "Не става дума колко силно удряш.",
+      "tr": "Ne kadar sert vurduğun önemli değil.",
+      "es": "No se trata de lo fuerte que golpeas.",
+      "ru": "Дело не в том, как сильно ты бьёшь.",
+      "it": "Non conta quanto forte colpisci.",
+      "de": "Es kommt nicht darauf an, wie hart du zuschlägst.",
+      "fr": "Ce n'est pas la force de frappe qui compte."
+    }
+  },
+
+  {
+    "id": 9,
+    "year": 1975,
+    "movie": {
+      "en": "Jaws",
+      "bg": "Челюсти",
+      "tr": "Jaws",
+      "es": "Tiburón",
+      "ru": "Челюсти",
+      "it": "Lo squalo",
+      "de": "Der weiße Hai",
+      "fr": "Les Dents de la mer"
+    },
+    "actors": {
+      "en": ["Roy Scheider"],
+      "bg": ["Рой Шайдер"],
+      "ru": ["Рой Шайдер"],
+      "tr": ["Roy Scheider"],
+      "es": ["Roy Scheider"],
+      "it": ["Roy Scheider"],
+      "de": ["Roy Scheider"],
+      "fr": ["Roy Scheider"]
+    },
+    "quote": {
+      "en": "You're gonna need a bigger boat.",
+      "bg": "Ще ти трябва по-голяма лодка.",
+      "tr": "Daha büyük bir tekneye ihtiyacın olacak.",
+      "es": "Vas a necesitar un barco más grande.",
+      "ru": "Нам понадобится лодка побольше.",
+      "it": "Ci servirà una barca più grande.",
+      "de": "Wir brauchen ein größeres Boot.",
+      "fr": "Il va nous falloir un plus gros bateau."
+    }
+  },
+
+  {
+    "id": 10,
+    "year": 1991,
+    "movie": {
+      "en": "Terminator 2",
+      "bg": "Терминатор 2",
+      "tr": "Terminatör 2",
+      "es": "Terminator 2",
+      "ru": "Терминатор 2",
+      "it": "Terminator 2",
+      "de": "Terminator 2",
+      "fr": "Terminator 2"
+    },
+    "actors": {
+      "en": ["Arnold Schwarzenegger"],
+      "bg": ["Арнолд Шварценегер"],
+      "ru": ["Арнольд Шварценеггер"],
+      "tr": ["Arnold Schwarzenegger"],
+      "es": ["Arnold Schwarzenegger"],
+      "it": ["Arnold Schwarzenegger"],
+      "de": ["Arnold Schwarzenegger"],
+      "fr": ["Arnold Schwarzenegger"]
+    },
+    "quote": {
+      "en": "I'll be back.",
+      "bg": "Ще се върна.",
+      "tr": "Geri döneceğim.",
+      "es": "Volveré.",
+      "ru": "Я вернусь.",
+      "it": "Tornerò.",
+      "de": "Ich komme wieder.",
+      "fr": "Je reviendrai."
+    }
+  },
+
+  {
+    "id": 11,
+    "year": 1996,
+    "movie": {
+      "en": "Jerry Maguire",
+      "bg": "Джери Магуайър",
+      "tr": "Jerry Maguire",
+      "es": "Jerry Maguire",
+      "ru": "Джерри Магуайер",
+      "it": "Jerry Maguire",
+      "de": "Jerry Maguire",
+      "fr": "Jerry Maguire"
+    },
+    "actors": {
+      "en": ["Tom Cruise"],
+      "bg": ["Том Круз"],
+      "ru": ["Том Круз"],
+      "tr": ["Tom Cruise"],
+      "es": ["Tom Cruise"],
+      "it": ["Tom Cruise"],
+      "de": ["Tom Cruise"],
+      "fr": ["Tom Cruise"]
+    },
+    "quote": {
+      "en": "Show me the money!",
+      "bg": "Покажи ми парите!",
+      "tr": "Parayı göster bana!",
+      "es": "¡Enséñame el dinero!",
+      "ru": "Покажи мне деньги!",
+      "it": "Fammi vedere i soldi!",
+      "de": "Zeig mir das Geld!",
+      "fr": "Montre-moi l'argent !"
+    }
+  },
+
+  {
+    "id": 12,
+    "year": 1980,
+    "movie": {
+      "en": "The Shining",
+      "bg": "Сиянието",
+      "tr": "Cinnet",
+      "es": "El resplandor",
+      "ru": "Сияние",
+      "it": "Shining",
+      "de": "Shining",
+      "fr": "Shining"
+    },
+    "actors": {
+      "en": ["Jack Nicholson"],
+      "bg": ["Джак Никълсън"],
+      "ru": ["Джек Николсон"],
+      "tr": ["Jack Nicholson"],
+      "es": ["Jack Nicholson"],
+      "it": ["Jack Nicholson"],
+      "de": ["Jack Nicholson"],
+      "fr": ["Jack Nicholson"]
+    },
+    "quote": {
+      "en": "Here's Johnny!",
+      "bg": "Ето го Джони!",
+      "tr": "İşte Johnny!",
+      "es": "¡Aquí está Johnny!",
+      "ru": "А вот и Джонни!",
+      "it": "Ecco Johnny!",
+      "de": "Hier ist Johnny!",
+      "fr": "Voici Johnny !"
+    }
+  },
+
+  {
+    "id": 13,
+    "year": 1942,
+    "movie": {
+      "en": "Casablanca",
+      "bg": "Казабланка",
+      "tr": "Kazablanka",
+      "es": "Casablanca",
+      "ru": "Касабланка",
+      "it": "Casablanca",
+      "de": "Casablanca",
+      "fr": "Casablanca"
+    },
+    "actors": {
+      "en": ["Humphrey Bogart", "Ingrid Bergman"],
+      "bg": ["Хъмфри Богарт", "Ингрид Бергман"],
+      "ru": ["Хамфри Богарт", "Ингрид Бергман"],
+      "tr": ["Humphrey Bogart", "Ingrid Bergman"],
+      "es": ["Humphrey Bogart", "Ingrid Bergman"],
+      "it": ["Humphrey Bogart", "Ingrid Bergman"],
+      "de": ["Humphrey Bogart", "Ingrid Bergman"],
+      "fr": ["Humphrey Bogart", "Ingrid Bergman"]
+    },
+    "quote": {
+      "en": "Here's looking at you, kid.",
+      "bg": "Наздраве за теб, хлапе.",
+      "tr": "İşte sana bakıyorum, ufaklık.",
+      "es": "Brindo por ti, cariño.",
+      "ru": "За тебя, малыш.",
+      "it": "Guardo gli occhi su di te, piccola.",
+      "de": "Ich schau dir in die Augen, Kleines.",
+      "fr": "Je te regarde, petite."
+    }
+  },
+
+  {
+    "id": 14,
+    "year": 1995,
+    "movie": {
+      "en": "Braveheart",
+      "bg": "Смело сърце",
+      "tr": "Cesur Yürek",
+      "es": "Corazón valiente",
+      "ru": "Храброе сердце",
+      "it": "Braveheart",
+      "de": "Braveheart",
+      "fr": "Braveheart"
+    },
+    "actors": {
+      "en": ["Mel Gibson"],
+      "bg": ["Мел Гибсън"],
+      "ru": ["Мел Гибсон"],
+      "tr": ["Mel Gibson"],
+      "es": ["Mel Gibson"],
+      "it": ["Mel Gibson"],
+      "de": ["Mel Gibson"],
+      "fr": ["Mel Gibson"]
+    },
+    "quote": {
+      "en": "Freedom!",
+      "bg": "Свобода!",
+      "tr": "Özgürlük!",
+      "es": "¡Libertad!",
+      "ru": "Свобода!",
+      "it": "Libertà!",
+      "de": "Freiheit!",
+      "fr": "Liberté !"
+    }
+  },
+
+  {
+    "id": 15,
+    "year": 1992,
+    "movie": {
+      "en": "A Few Good Men",
+      "bg": "Няколко добри мъже",
+      "tr": "Birkaç İyi Adam",
+      "es": "Algunos hombres buenos",
+      "ru": "Несколько хороших парней",
+      "it": "Codice d'onore",
+      "de": "Eine Frage der Ehre",
+      "fr": "Des hommes d'honneur"
+    },
+    "actors": {
+      "en": ["Tom Cruise", "Jack Nicholson"],
+      "bg": ["Том Круз", "Джак Никълсън"],
+      "ru": ["Том Круз", "Джек Николсон"],
+      "tr": ["Tom Cruise", "Jack Nicholson"],
+      "es": ["Tom Cruise", "Jack Nicholson"],
+      "it": ["Tom Cruise", "Jack Nicholson"],
+      "de": ["Tom Cruise", "Jack Nicholson"],
+      "fr": ["Tom Cruise", "Jack Nicholson"]
+    },
+    "quote": {
+      "en": "You can't handle the truth!",
+      "bg": "Не можеш да понесеш истината!",
+      "tr": "Gerçeği kaldıramazsın!",
+      "es": "¡No puedes manejar la verdad!",
+      "ru": "Ты не выдержишь правды!",
+      "it": "Non puoi gestire la verità!",
+      "de": "Du kannst die Wahrheit nicht ertragen!",
+      "fr": "Tu ne peux pas gérer la vérité !"
+    }
+  },
+
+  {
+    "id": 16,
+    "year": 1994,
+    "movie": {
+      "en": "Pulp Fiction",
+      "bg": "Криминале",
+      "tr": "Ucuz Roman",
+      "es": "Tiempos violentos",
+      "ru": "Криминальное чтиво",
+      "it": "Pulp Fiction",
+      "de": "Pulp Fiction",
+      "fr": "Pulp Fiction"
+    },
+    "actors": {
+      "en": ["John Travolta", "Samuel L. Jackson"],
+      "bg": ["Джон Траволта", "Самюъл Л. Джаксън"],
+      "ru": ["Джон Траволта", "Сэмюэл Л. Джексон"],
+      "tr": ["John Travolta", "Samuel L. Jackson"],
+      "es": ["John Travolta", "Samuel L. Jackson"],
+      "it": ["John Travolta", "Samuel L. Jackson"],
+      "de": ["John Travolta", "Samuel L. Jackson"],
+      "fr": ["John Travolta", "Samuel L. Jackson"]
+    },
+    "quote": {
+      "en": "Say what again!",
+      "bg": "Кажи какво пак!",
+      "tr": "Bir daha ne dedin!",
+      "es": "¡Di qué otra vez!",
+      "ru": "Скажи это ещё раз!",
+      "it": "Dillo di nuovo!",
+      "de": "Sag das nochmal!",
+      "fr": "Dis ça encore !"
+    }
+  },
+
+  {
+    "id": 17,
+    "year": 2001,
+    "movie": {
+      "en": "The Lord of the Rings",
+      "bg": "Властелинът на пръстените",
+      "tr": "Yüzüklerin Efendisi",
+      "es": "El señor de los anillos",
+      "ru": "Властелин колец",
+      "it": "Il Signore degli Anelli",
+      "de": "Der Herr der Ringe",
+      "fr": "Le Seigneur des anneaux"
+    },
+    "actors": {
+      "en": ["Elijah Wood", "Ian McKellen"],
+      "bg": ["Илайджа Ууд", "Иън Маккелън"],
+      "ru": ["Элайджа Вуд", "Иэн Маккеллен"],
+      "tr": ["Elijah Wood", "Ian McKellen"],
+      "es": ["Elijah Wood", "Ian McKellen"],
+      "it": ["Elijah Wood", "Ian McKellen"],
+      "de": ["Elijah Wood", "Ian McKellen"],
+      "fr": ["Elijah Wood", "Ian McKellen"]
+    },
+    "quote": {
+      "en": "You shall not pass!",
+      "bg": "Няма да минеш!",
+      "tr": "Geçemezsin!",
+      "es": "¡No pasarás!",
+      "ru": "Ты не пройдёшь!",
+      "it": "Non passerai!",
+      "de": "Du kannst nicht vorbei!",
+      "fr": "Tu ne passeras pas !"
+    }
+  },
+
+  {
+    "id": 18,
+    "year": 1971,
+    "movie": {
+      "en": "Dirty Harry",
+      "bg": "Мръсният Хари",
+      "tr": "Kirli Harry",
+      "es": "Harry el sucio",
+      "ru": "Грязный Гарри",
+      "it": "Ispettore Callaghan",
+      "de": "Dirty Harry",
+      "fr": "L'Inspecteur Harry"
+    },
+    "actors": {
+      "en": ["Clint Eastwood"],
+      "bg": ["Клинт Истууд"],
+      "ru": ["Клинт Иствуд"],
+      "tr": ["Clint Eastwood"],
+      "es": ["Clint Eastwood"],
+      "it": ["Clint Eastwood"],
+      "de": ["Clint Eastwood"],
+      "fr": ["Clint Eastwood"]
+    },
+    "quote": {
+      "en": "Do you feel lucky?",
+      "bg": "Чувстваш ли се късметлия?",
+      "tr": "Kendini şanslı hissediyor musun?",
+      "es": "¿Te sientes con suerte?",
+      "ru": "Тебе везёт?",
+      "it": "Ti senti fortunato?",
+      "de": "Fühlst du dich glücklich?",
+      "fr": "Te sens-tu chanceux ?"
+    }
+  },
+
+  {
+    "id": 19,
+    "year": 2005,
+    "movie": {
+      "en": "Batman Begins",
+      "bg": "Батман в началото",
+      "tr": "Batman Başlıyor",
+      "es": "Batman inicia",
+      "ru": "Бэтмен: Начало",
+      "it": "Batman Begins",
+      "de": "Batman Begins",
+      "fr": "Batman Begins"
+    },
+    "actors": {
+      "en": ["Christian Bale"],
+      "bg": ["Крисчън Бейл"],
+      "ru": ["Кристиан Бейл"],
+      "tr": ["Christian Bale"],
+      "es": ["Christian Bale"],
+      "it": ["Christian Bale"],
+      "de": ["Christian Bale"],
+      "fr": ["Christian Bale"]
+    },
+    "quote": {
+      "en": "Why do we fall?",
+      "bg": "Защо падаме?",
+      "tr": "Neden düşeriz?",
+      "es": "¿Por qué caemos?",
+      "ru": "Почему мы падаем?",
+      "it": "Perché cadiamo?",
+      "de": "Warum fallen wir?",
+      "fr": "Pourquoi tombons-nous ?"
+    }
+  },
+
+  {
+    "id": 20,
+    "year": 1999,
+    "movie": {
+      "en": "The Sixth Sense",
+      "bg": "Шесто чувство",
+      "tr": "Altıncı His",
+      "es": "El sexto sentido",
+      "ru": "Шестое чувство",
+      "it": "Il sesto senso",
+      "de": "The Sixth Sense",
+      "fr": "Sixième sens"
+    },
+    "actors": {
+      "en": ["Bruce Willis"],
+      "bg": ["Брус Уилис"],
+      "ru": ["Брюс Уиллис"],
+      "tr": ["Bruce Willis"],
+      "es": ["Bruce Willis"],
+      "it": ["Bruce Willis"],
+      "de": ["Bruce Willis"],
+      "fr": ["Bruce Willis"]
+    },
+    "quote": {
+      "en": "I see dead people.",
+      "bg": "Виждам мъртви хора.",
+      "tr": "Ölü insanlar görüyorum.",
+      "es": "Veo gente muerta.",
+      "ru": "Я вижу мёртвых людей.",
+      "it": "Vedo la gente morta.",
+      "de": "Ich sehe tote Menschen.",
+      "fr": "Je vois des morts."
+    }
+  },
+  [
+  {
+    "id": 21,
+    "year": 1996,
+    "movie": {
+      "en": "Independence Day",
+      "bg": "Денят на независимостта",
+      "tr": "Kurtuluş Günü",
+      "es": "Día de la Independencia",
+      "ru": "День независимости",
+      "it": "Independence Day",
+      "de": "Independence Day",
+      "fr": "Independence Day"
+    },
+    "actors": {
+      "en": ["Will Smith"],
+      "bg": ["Уил Смит"],
+      "ru": ["Уилл Смит"],
+      "tr": ["Will Smith"],
+      "es": ["Will Smith"],
+      "it": ["Will Smith"],
+      "de": ["Will Smith"],
+      "fr": ["Will Smith"]
+    },
+    "quote": {
+      "en": "Welcome to Earth!",
+      "bg": "Добре дошъл на Земята!",
+      "tr": "Dünyaya hoş geldin!",
+      "es": "¡Bienvenido a la Tierra!",
+      "ru": "Добро пожаловать на Землю!",
+      "it": "Benvenuto sulla Terra!",
+      "de": "Willkommen auf der Erde!",
+      "fr": "Bienvenue sur Terre !"
+    }
+  },
+  {
+    "id": 22,
+    "year": 1987,
+    "movie": {
+      "en": "Wall Street",
+      "bg": "Уолстрийт",
+      "tr": "Wall Street",
+      "es": "Wall Street",
+      "ru": "Уолл-стрит",
+      "it": "Wall Street",
+      "de": "Wall Street",
+      "fr": "Wall Street"
+    },
+    "actors": {
+      "en": ["Michael Douglas"],
+      "bg": ["Майкъл Дъглас"],
+      "ru": ["Майкл Дуглас"],
+      "tr": ["Michael Douglas"],
+      "es": ["Michael Douglas"],
+      "it": ["Michael Douglas"],
+      "de": ["Michael Douglas"],
+      "fr": ["Michael Douglas"]
+    },
+    "quote": {
+      "en": "Greed is good.",
+      "bg": "Алчността е добра.",
+      "tr": "Açgözlülük iyidir.",
+      "es": "La codicia es buena.",
+      "ru": "Жадность — это хорошо.",
+      "it": "L'avidità è buona.",
+      "de": "Gier ist gut.",
+      "fr": "La cupidité est bonne."
+    }
+  },
+  {
+    "id": 23,
+    "year": 1989,
+    "movie": {
+      "en": "Field of Dreams",
+      "bg": "Поле на мечтите",
+      "tr": "Düşler Tarlası",
+      "es": "Campo de sueños",
+      "ru": "Поле чудес",
+      "it": "L'uomo dei sogni",
+      "de": "Feld der Träume",
+      "fr": "Jusqu'au bout du rêve"
+    },
+    "actors": {
+      "en": ["Kevin Costner"],
+      "bg": ["Кевин Костнър"],
+      "ru": ["Кевин Костнер"],
+      "tr": ["Kevin Costner"],
+      "es": ["Kevin Costner"],
+      "it": ["Kevin Costner"],
+      "de": ["Kevin Costner"],
+      "fr": ["Kevin Costner"]
+    },
+    "quote": {
+      "en": "If you build it, he will come.",
+      "bg": "Ако го построиш, той ще дойде.",
+      "tr": "Eğer inşa edersen, o gelir.",
+      "es": "Si lo construyes, vendrá.",
+      "ru": "Если ты построишь, он придёт.",
+      "it": "Se lo costruisci, lui verrà.",
+      "de": "Wenn du es baust, wird er kommen.",
+      "fr": "Si tu le construis, il viendra."
+    }
+  },
+  {
+    "id": 24,
+    "year": 1996,
+    "movie": {
+      "en": "Mission: Impossible",
+      "bg": "Мисията невъзможна",
+      "tr": "Görevimiz Tehlike",
+      "es": "Misión imposible",
+      "ru": "Миссия невыполнима",
+      "it": "Mission: Impossible",
+      "de": "Mission: Impossible",
+      "fr": "Mission impossible"
+    },
+    "actors": {
+      "en": ["Tom Cruise"],
+      "bg": ["Том Круз"],
+      "ru": ["Том Круз"],
+      "tr": ["Tom Cruise"],
+      "es": ["Tom Cruise"],
+      "it": ["Tom Cruise"],
+      "de": ["Tom Cruise"],
+      "fr": ["Tom Cruise"]
+    },
+    "quote": {
+      "en": "This message will self-destruct.",
+      "bg": "Това съобщение ще се самоунищожи.",
+      "tr": "Bu mesaj kendini imha edecek.",
+      "es": "Este mensaje se autodestruirá.",
+      "ru": "Это сообщение самоуничтожится.",
+      "it": "Questo messaggio si autodistruggerà.",
+      "de": "Diese Nachricht wird sich selbst zerstören.",
+      "fr": "Ce message s'autodétruira."
+    }
+  },
+  {
+    "id": 25,
+    "year": 1999,
+    "movie": {
+      "en": "Fight Club",
+      "bg": "Боен клуб",
+      "tr": "Dövüş Kulübü",
+      "es": "El club de la lucha",
+      "ru": "Бойцовский клуб",
+      "it": "Fight Club",
+      "de": "Fight Club",
+      "fr": "Fight Club"
+    },
+    "actors": {
+      "en": ["Brad Pitt", "Edward Norton"],
+      "bg": ["Брад Пит", "Едуард Нортън"],
+      "ru": ["Брэд Питт", "Эдвард Нортон"],
+      "tr": ["Brad Pitt", "Edward Norton"],
+      "es": ["Brad Pitt", "Edward Norton"],
+      "it": ["Brad Pitt", "Edward Norton"],
+      "de": ["Brad Pitt", "Edward Norton"],
+      "fr": ["Brad Pitt", "Edward Norton"]
+    },
+    "quote": {
+      "en": "The first rule of Fight Club is: you do not talk about Fight Club.",
+      "bg": "Първото правило на Боен клуб е: не говориш за Боен клуб.",
+      "tr": "Dövüş Kulübü'nün ilk kuralı: Dövüş Kulübü hakkında konuşmazsın.",
+      "es": "La primera regla del club de la lucha es: no hablas del club de la lucha.",
+      "ru": "Первое правило Бойцовского клуба: не говорить о Бойцовском клубе.",
+      "it": "La prima regola del Fight Club è: non parli del Fight Club.",
+      "de": "Die erste Regel des Fight Club lautet: Ihr verliert kein Wort über den Fight Club.",
+      "fr": "La première règle du Fight Club est : il est interdit de parler du Fight Club."
+    }
+  },
+  {
+    "id": 26,
+    "year": 1997,
+    "movie": {
+      "en": "Good Will Hunting",
+      "bg": "Добрият Уил Хънтинг",
+      "tr": "Can Dostum",
+      "es": "El indomable Will Hunting",
+      "ru": "Умница Уилл Хантинг",
+      "it": "Will Hunting - Genio ribelle",
+      "de": "Good Will Hunting",
+      "fr": "Will Hunting"
+    },
+    "actors": {
+      "en": ["Matt Damon", "Robin Williams"],
+      "bg": ["Мат Деймън", "Робин Уилямс"],
+      "ru": ["Мэтт Деймон", "Робин Уильямс"],
+      "tr": ["Matt Damon", "Robin Williams"],
+      "es": ["Matt Damon", "Robin Williams"],
+      "it": ["Matt Damon", "Robin Williams"],
+      "de": ["Matt Damon", "Robin Williams"],
+      "fr": ["Matt Damon", "Robin Williams"]
+    },
+    "quote": {
+      "en": "It's not your fault.",
+      "bg": "Не е твоя вина.",
+      "tr": "Bu senin suçun değil.",
+      "es": "No es tu culpa.",
+      "ru": "Это не твоя вина.",
+      "it": "Non è colpa tua.",
+      "de": "Es ist nicht deine Schuld.",
+      "fr": "Ce n'est pas ta faute."
+    }
+  },
+  {
+    "id": 27,
+    "year": 2000,
+    "movie": {
+      "en": "Cast Away",
+      "bg": "Изгубен",
+      "tr": "Yeni Hayat",
+      "es": "Náufrago",
+      "ru": "Изгой",
+      "it": "Cast Away",
+      "de": "Cast Away",
+      "fr": "Seul au monde"
+    },
+    "actors": {
+      "en": ["Tom Hanks"],
+      "bg": ["Том Ханкс"],
+      "ru": ["Том Хэнкс"],
+      "tr": ["Tom Hanks"],
+      "es": ["Tom Hanks"],
+      "it": ["Tom Hanks"],
+      "de": ["Tom Hanks"],
+      "fr": ["Tom Hanks"]
+    },
+    "quote": {
+      "en": "Wilson!",
+      "bg": "Уилсън!",
+      "tr": "Wilson!",
+      "es": "¡Wilson!",
+      "ru": "Уилсон!",
+      "it": "Wilson!",
+      "de": "Wilson!",
+      "fr": "Wilson !"
+    }
+  },
+  {
+    "id": 28,
+    "year": 2003,
+    "movie": {
+      "en": "Pirates of the Caribbean",
+      "bg": "Карибски пирати",
+      "tr": "Karayip Korsanları",
+      "es": "Piratas del Caribe",
+      "ru": "Пираты Карибского моря",
+      "it": "Pirati dei Caraibi",
+      "de": "Fluch der Karibik",
+      "fr": "Pirates des Caraïbes"
+    },
+    "actors": {
+      "en": ["Johnny Depp", "Orlando Bloom"],
+      "bg": ["Джони Деп", "Орландо Блум"],
+      "ru": ["Джонни Депп", "Орландо Блум"],
+      "tr": ["Johnny Depp", "Orlando Bloom"],
+      "es": ["Johnny Depp", "Orlando Bloom"],
+      "it": ["Johnny Depp", "Orlando Bloom"],
+      "de": ["Johnny Depp", "Orlando Bloom"],
+      "fr": ["Johnny Depp", "Orlando Bloom"]
+    },
+    "quote": {
+      "en": "Why is the rum gone?",
+      "bg": "Защо ромът свърши?",
+      "tr": "Neden rom bitti?",
+      "es": "¿Por qué se acabó el ron?",
+      "ru": "Почему ром закончился?",
+      "it": "Perché il rum è finito?",
+      "de": "Warum ist der Rum weg?",
+      "fr": "Pourquoi le rhum a disparu ?"
+    }
+  },
+  {
+    "id": 29,
+    "year": 2010,
+    "movie": {
+      "en": "Inception",
+      "bg": "Генезис",
+      "tr": "Başlangıç",
+      "es": "Origen",
+      "ru": "Начало",
+      "it": "Inception",
+      "de": "Inception",
+      "fr": "Inception"
+    },
+    "actors": {
+      "en": ["Leonardo DiCaprio"],
+      "bg": ["Леонардо ДиКаприо"],
+      "ru": ["Леонардо Ди Каприо"],
+      "tr": ["Leonardo DiCaprio"],
+      "es": ["Leonardo DiCaprio"],
+      "it": ["Leonardo DiCaprio"],
+      "de": ["Leonardo DiCaprio"],
+      "fr": ["Leonardo DiCaprio"]
+    },
+    "quote": {
+      "en": "You mustn't be afraid to dream a little bigger.",
+      "bg": "Не трябва да се страхуваш да мечтаеш малко по-смело.",
+      "tr": "Biraz daha büyük hayaller kurmaktan korkmamalısın.",
+      "es": "No debes tener miedo de soñar un poco más grande.",
+      "ru": "Не бойся мечтать чуть масштабнее.",
+      "it": "Non devi avere paura di sognare un po' più in grande.",
+      "de": "Du darfst keine Angst haben, etwas größer zu träumen.",
+      "fr": "Tu ne dois pas avoir peur de rêver un peu plus grand."
+    }
+  },
+  {
+    "id": 30,
+    "year": 2008,
+    "movie": {
+      "en": "Iron Man",
+      "bg": "Железният човек",
+      "tr": "Demir Adam",
+      "es": "Iron Man",
+      "ru": "Железный человек",
+      "it": "Iron Man",
+      "de": "Iron Man",
+      "fr": "Iron Man"
+    },
+    "actors": {
+      "en": ["Robert Downey Jr."],
+      "bg": ["Робърт Дауни Джуниър"],
+      "ru": ["Роберт Дауни-младший"],
+      "tr": ["Robert Downey Jr."],
+      "es": ["Robert Downey Jr."],
+      "it": ["Robert Downey Jr."],
+      "de": ["Robert Downey Jr."],
+      "fr": ["Robert Downey Jr."]
+    },
+    "quote": {
+      "en": "I am Iron Man.",
+      "bg": "Аз съм Железният човек.",
+      "tr": "Ben Iron Man'im.",
+      "es": "Yo soy Iron Man.",
+      "ru": "Я — Железный человек.",
+      "it": "Io sono Iron Man.",
+      "de": "Ich bin Iron Man.",
+      "fr": "Je suis Iron Man."
+    }
+  }
+]
+]

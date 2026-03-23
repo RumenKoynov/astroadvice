@@ -92,8 +92,8 @@ android {
         applicationId "com.astroadvice"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 9
-        versionName "1.0.9"
+        versionCode 16
+        versionName "1.1.6"
     }
     signingConfigs {
         debug {
@@ -135,6 +135,7 @@ dependencies {
     }
     implementation platform('com.google.firebase:firebase-bom:34.10.0')
     implementation 'com.google.firebase:firebase-analytics'
+    implementation "com.google.android.ump:user-messaging-platform:2.2.0"
+    implementation "androidx.work:work-runtime-ktx:2.9.0"
     
 }
-

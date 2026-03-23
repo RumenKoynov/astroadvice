@@ -1,0 +1,6 @@
+<resources>
+    <string name="notification_title">AstroAdvice</string>
+    <string name="notification_text">Votre horoscope quotidien et votre tirage de tarot sont prêts ✨</string>
+    <string name="notification_channel_name">Lectures quotidiennes</string>
+    <string name="notification_channel_desc">Rappels quotidiens d’horoscope et de tarot.</string>
+</resources>

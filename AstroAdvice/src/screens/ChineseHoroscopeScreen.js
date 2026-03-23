@@ -11,6 +11,7 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@react-navigation/native';
@@ -21,8 +22,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser } from '../context/UserContext';
 import { apiFetch } from '../services/api';
 import { BYPASS_DAILY_LIMITS } from '../config/featureFlags';
-import { AD_REQUEST_OPTIONS, INTERSTITIAL_CHINESE_HOROSCOPE_AD_UNIT_ID } from '../config/admob';
+import {
+  AD_REQUEST_OPTIONS,
+  INTERSTITIAL_CHINESE_HOROSCOPE_AD_UNIT_ID,
+  BANNER_CHINESE_READING_AD_UNIT_ID,
+} from '../config/admob';
 import { logEvent, logScreen } from '../services/analytics';
+import AdBanner from '../components/ads/AdBanner';
 
 const DATE_KEY = () => new Date().toISOString().slice(0, 10);
 const INTERSTITIAL_DAILY_KEY = 'astro_interstitial_chinese_v1';
@@ -47,14 +53,22 @@ export default function ChineseHoroscopeScreen({ navigation }) {
 
   const todayKey = useMemo(() => DATE_KEY(), []);
   const savedRaw = user?.daily?.chineseHoroscope?.[todayKey] || null;
-  const locked = !BYPASS_DAILY_LIMITS && !!savedRaw;
+  const matchContext = !!savedRaw
+    && savedRaw.sign === sign
+    && savedRaw.element === element
+    && savedRaw.lang === i18n.language
+    && String(savedRaw.sex || '') === String(user?.sex || '')
+    && String(savedRaw.age ?? '') === String(user?.age ?? '');
+  const effectiveSaved = BYPASS_DAILY_LIMITS ? null : (matchContext ? savedRaw : null);
+  const locked = !!effectiveSaved;
 
   // phases: 'loading' | 'sign' | 'element' | 'horoscope' | 'locked' | 'error'
   const [phase, setPhase] = useState(locked ? 'locked' : 'loading');
   const [signData, setSignData] = useState(null); // { name, desc, imageUrl }
   const [elemData, setElemData] = useState(null); // { name, desc, imageUrl }
-  const [horoscope, setHoroscope] = useState(savedRaw?.horoscope || '');
+  const [horoscope, setHoroscope] = useState(effectiveSaved?.horoscope || '');
   const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
 
   // Animations
   const fadeSign = useRef(new Animated.Value(0)).current;
@@ -82,14 +96,14 @@ export default function ChineseHoroscopeScreen({ navigation }) {
   const signLabel = sign ? (t(sign) || sign) : '';
   const elementTitle = formatElementTitle(sign, element);
   const savedTitle = (() => {
-    const slug = savedRaw?.slug || '';
+    const slug = effectiveSaved?.slug || '';
     if (slug.includes('-')) {
       const [savedSign, savedElement] = slug.split('-');
       if (savedSign && savedElement) {
         return formatElementTitle(savedSign, savedElement);
       }
     }
-    return savedRaw?.name || '';
+    return effectiveSaved?.name || '';
   })();
 
   useEffect(() => {
@@ -103,12 +117,12 @@ export default function ChineseHoroscopeScreen({ navigation }) {
   useEffect(() => {
     if (locked) {
       setPhase('locked');
-      setHoroscope(savedRaw?.horoscope || '');
+      setHoroscope(effectiveSaved?.horoscope || '');
     } else if (phase === 'locked') {
       setPhase('loading');
     }
     setErr('');
-  }, [locked, savedRaw?.horoscope, phase]);
+  }, [locked, effectiveSaved?.horoscope, phase]);
 
   useEffect(() => {
     if (!horoscope) {
@@ -226,6 +240,7 @@ export default function ChineseHoroscopeScreen({ navigation }) {
       return;
     }
     try {
+      setBusy(true);
       setErr('');
       const slug = `${sign}-${element}`;
       const d = await apiFetch(
@@ -250,6 +265,8 @@ export default function ChineseHoroscopeScreen({ navigation }) {
         feature: 'chinese_element',
         code: String(e?.message || 'error').slice(0, 60),
       });
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -259,12 +276,15 @@ export default function ChineseHoroscopeScreen({ navigation }) {
       return;
     }
     try {
+      setBusy(true);
       setErr('');
       maybeShowInterstitial();
       const data = await apiFetch(
         `/chinese/daily?sign=${encodeURIComponent(sign)}&element=${encodeURIComponent(
           element
-        )}&lang=${encodeURIComponent(i18n.language)}`,
+        )}&lang=${encodeURIComponent(i18n.language)}&sex=${encodeURIComponent(
+          user?.sex || ''
+        )}&age=${encodeURIComponent(user?.age ?? '')}`,
         'GET'
       );
       const text = data?.horoscope || '';
@@ -278,11 +298,15 @@ export default function ChineseHoroscopeScreen({ navigation }) {
 
       const snapshot = {
         slug: `${sign}-${element}`,
+        sign,
+        element,
         name: elementTitle || elemData?.name || signData?.name || '',
         desc: elemData?.desc || signData?.desc || '',
         imageUrl: elemData?.imageUrl || signData?.imageUrl || '',
         horoscope: text,
         lang: i18n.language,
+        sex: user?.sex || '',
+        age: user?.age ?? '',
       };
       user.setDaily(todayKey, 'chineseHoroscope', snapshot);
       setPhase('horoscope');
@@ -292,6 +316,8 @@ export default function ChineseHoroscopeScreen({ navigation }) {
         feature: 'chinese_horoscope',
         code: String(e?.message || 'error').slice(0, 60),
       });
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -314,9 +340,9 @@ export default function ChineseHoroscopeScreen({ navigation }) {
               contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
               showsVerticalScrollIndicator={false}
             >
-              {!!savedRaw?.imageUrl && (
+              {!!effectiveSaved?.imageUrl && (
                 <Image
-                  source={{ uri: savedRaw.imageUrl }}
+                  source={{ uri: effectiveSaved.imageUrl }}
                   style={styles.mainImg}
                   resizeMode="contain"
                 />
@@ -326,19 +352,26 @@ export default function ChineseHoroscopeScreen({ navigation }) {
                 <Text style={styles.titleText}>{savedTitle}</Text>
               )}
 
-              {!!savedRaw?.desc && (
+              {!!effectiveSaved?.desc && (
                 <View style={styles.card}>
-                  <Text style={styles.cardText}>{savedRaw.desc}</Text>
+                  <Text style={styles.cardText}>{effectiveSaved.desc}</Text>
                 </View>
               )}
 
-              {!!savedRaw?.horoscope && (
+              {!!effectiveSaved?.horoscope && (
                 <View style={styles.card}>
                   <Text style={styles.cardHeader}>
                     {t('todays_horoscope') || "Today's horoscope"}
                   </Text>
-                  <Text style={styles.cardText}>{savedRaw.horoscope}</Text>
+                  <Text style={styles.cardText}>{effectiveSaved.horoscope}</Text>
                 </View>
+              )}
+
+              {!!effectiveSaved?.horoscope && (
+                <AdBanner
+                  unitId={BANNER_CHINESE_READING_AD_UNIT_ID}
+                  placement="chinese_horoscope_bottom_banner"
+                />
               )}
             </ScrollView>
 
@@ -368,6 +401,12 @@ export default function ChineseHoroscopeScreen({ navigation }) {
             contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
             showsVerticalScrollIndicator={false}
           >
+            {phase === 'loading' && (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator size="large" color="#ffe7c2" />
+                <Text style={styles.loadingText}>{t('loading') || 'Loading...'}</Text>
+              </View>
+            )}
             {!!signData?.imageUrl && (
               <Animated.Image
                 source={{ uri: signData.imageUrl }}
@@ -418,6 +457,13 @@ export default function ChineseHoroscopeScreen({ navigation }) {
               </View>
             )}
 
+            {!!horoscope && (
+              <AdBanner
+                unitId={BANNER_CHINESE_READING_AD_UNIT_ID}
+                placement="chinese_horoscope_bottom_banner"
+              />
+            )}
+
             {!!err && <Text style={styles.errorText}>{err}</Text>}
           </ScrollView>
 
@@ -426,6 +472,7 @@ export default function ChineseHoroscopeScreen({ navigation }) {
               <ChineseButton
                 label={t('reveal_my_element') || 'Reveal my element'}
                 onPress={onRevealElement}
+                disabled={busy}
               />
             )}
 
@@ -433,6 +480,7 @@ export default function ChineseHoroscopeScreen({ navigation }) {
               <ChineseButton
                 label={t('todays_horoscope') || "Today's horoscope"}
                 onPress={onGetTodaysHoroscope}
+                disabled={busy}
               />
             )}
 
@@ -440,6 +488,7 @@ export default function ChineseHoroscopeScreen({ navigation }) {
               <ChineseButton
                 label={t('back') || 'Back'}
                 onPress={() => navigation.goBack()}
+                disabled={busy}
               />
             )}
           </View>
@@ -535,6 +584,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10,
     fontSize: 13,
+  },
+  loadingRow: {
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
+  loadingText: {
+    color: '#ffe7c2',
+    fontWeight: '700',
+    fontSize: 16,
+    textAlign: 'center',
   },
 
   cnBtn: {

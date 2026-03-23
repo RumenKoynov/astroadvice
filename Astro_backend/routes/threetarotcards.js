@@ -78,7 +78,8 @@ function getSectionLabels(lang) {
 }
 
 function imgUrl(req, id) {
-  const base = process.env.API_PUBLIC_BASE || `${req.protocol}://${req.get('host')}`;
+  const proto = req.get('x-forwarded-proto') || req.protocol;
+  const base = process.env.API_PUBLIC_BASE || `${proto}://${req.get('host')}`;
   const exts = ['.png','.jpg','.jpeg'];
   const found = exts.find(ext => fs.existsSync(path.join(__dirname,'..','cards', id+ext))) || '.png';
   return `${base}/cards/${id}${found}`;

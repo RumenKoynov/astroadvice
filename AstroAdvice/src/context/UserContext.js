@@ -14,13 +14,14 @@ export function UserProvider({ children }) {
     chineseSign: '',    // derived
     chineseElement: '', // derived
     // daily caches
-    daily: {
-      advice: {},                 // {'YYYY-MM-DD': { sign, text }}
-      tarotSingle: {},            // {date: { card }}
-      tarotThree: {},             // {date: { cards, reading }}
-      chineseHoroscope: {},       // {date: { slug, horoscope }}
-      dailyNumber: {},            // {date: { number }}
-    },
+      daily: {
+        advice: {},                 // {'YYYY-MM-DD': { sign, text }}
+        tarotSingle: {},            // {date: { card }}
+        tarotThree: {},             // {date: { cards, reading }}
+        chineseHoroscope: {},       // {date: { slug, horoscope }}
+        dailyNumber: {},            // {date: { number }}
+        movieQuotes: {},            // {date: { quote, movie }}
+      },
   });
   const [hydrated, setHydrated] = useState(false);
 
@@ -65,7 +66,7 @@ export function UserProvider({ children }) {
       })),
     clearDaily: () => patch(prev => ({
       ...prev,
-      daily: { advice:{}, tarotSingle:{}, tarotThree:{}, chineseHoroscope:{}, dailyNumber:{} }
+      daily: { advice:{}, tarotSingle:{}, tarotThree:{}, chineseHoroscope:{}, dailyNumber:{}, movieQuotes:{} }
     })),
   }), [state, hydrated, save, patch]);
 
