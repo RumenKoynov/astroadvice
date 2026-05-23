@@ -11,6 +11,7 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.facebook.soloader.SoLoader
+import com.tiktok.TikTokBusinessSdk
 
 class MainApplication : Application(), ReactApplication {
 
@@ -21,6 +22,7 @@ class MainApplication : Application(), ReactApplication {
               // Packages that cannot be autolinked yet can be added manually here, for example:
               // add(MyReactNativePackage())
               add(ConsentPackage())
+              add(TikTokSdkPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"
@@ -37,6 +39,21 @@ class MainApplication : Application(), ReactApplication {
   override fun onCreate() {
     super.onCreate()
     SoLoader.init(this, OpenSourceMergedSoMapping)
+
+    if (BuildConfig.TIKTOK_TT_APP_ID.isNotBlank() && BuildConfig.TIKTOK_APP_SECRET.isNotBlank()) {
+      val ttConfig =
+          TikTokBusinessSdk.TTConfig(this, BuildConfig.TIKTOK_APP_SECRET)
+              .setAppId(BuildConfig.APPLICATION_ID)
+              .setTTAppId(BuildConfig.TIKTOK_TT_APP_ID)
+
+      if (BuildConfig.DEBUG) {
+        ttConfig.setLogLevel(TikTokBusinessSdk.LogLevel.DEBUG)
+      }
+
+      TikTokBusinessSdk.initializeSdk(ttConfig)
+      TikTokBusinessSdk.registerEDPLifecycleCallback(this)
+    }
+
     if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
       // If you opted-in for the New Architecture, we load the native entry point for this app.
       load()
