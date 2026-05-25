@@ -22,6 +22,7 @@
     "react-i18next": "^15.6.1",
     "react-native": "0.77.1",
     "react-native-device-info": "^15.0.2",
+    "react-native-fbsdk-next": "^13.4.3",
     "react-native-google-mobile-ads": "^14.2.1",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-localize": "^3.7.0",

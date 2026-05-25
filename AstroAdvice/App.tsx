@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { navigationRef } from './src/utils/nav';
 import mobileAds from 'react-native-google-mobile-ads';
 import DeviceInfo from 'react-native-device-info';
+import { Settings as FacebookSettings } from 'react-native-fbsdk-next';
 
 // Initialize i18n resources once
 import './src/i18n';
@@ -64,6 +65,16 @@ export default function App() {
 
   useEffect(() => {
     mobileAds().initialize();
+  }, []);
+
+  useEffect(() => {
+    try {
+      FacebookSettings.setAutoLogAppEventsEnabled(true);
+      FacebookSettings.setAdvertiserIDCollectionEnabled(true);
+      FacebookSettings.initializeSDK();
+    } catch {
+      // no-op
+    }
   }, []);
 
   useEffect(() => {

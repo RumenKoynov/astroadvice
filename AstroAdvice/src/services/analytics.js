@@ -1,5 +1,6 @@
 import analytics from '@react-native-firebase/analytics';
 import { tiktokTrackEvent } from './tiktok';
+import { fbLogEvent } from './facebook';
 
 const normalizeParam = (value) => {
   if (value === undefined || value === null) return undefined;
@@ -22,6 +23,7 @@ export async function logEvent(name, params) {
     const normalized = normalizeParams(params);
     await analytics().logEvent(name, normalized);
     tiktokTrackEvent(name, normalized);
+    fbLogEvent(name, normalized);
   } catch {
     // no-op
   }
@@ -39,6 +41,7 @@ export async function logScreen(name) {
     lastScreenTs = now;
     await analytics().logScreenView({ screen_name: name, screen_class: name });
     tiktokTrackEvent('screen_view', { screen_name: name, screen_class: name });
+    fbLogEvent('screen_view', { screen_name: name, screen_class: name });
   } catch {
     // no-op
   }
