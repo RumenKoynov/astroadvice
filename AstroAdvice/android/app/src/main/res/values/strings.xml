@@ -8,6 +8,6 @@
     <!-- Meta / Facebook SDK (react-native-fbsdk-next) -->
     <!-- Replace with your real values from Meta Developer Dashboard -->
     <string name="facebook_app_id">1399230241971991</string>
-    <string name="facebook_client_token">d5522e77f300063fa6cdb4d7db3ad7a2</string>
+    <string name="facebook_client_token">REPLACE_WITH_FACEBOOK_CLIENT_TOKEN</string>
     <string name="fb_login_protocol_scheme">fb1399230241971991</string>
 </resources>
