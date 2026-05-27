@@ -11,6 +11,8 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.facebook.soloader.SoLoader
+import com.facebook.FacebookSdk
+import com.facebook.appevents.AppEventsLogger
 import com.tiktok.TikTokBusinessSdk
 
 class MainApplication : Application(), ReactApplication {
@@ -39,6 +41,18 @@ class MainApplication : Application(), ReactApplication {
   override fun onCreate() {
     super.onCreate()
     SoLoader.init(this, OpenSourceMergedSoMapping)
+
+    // Meta / Facebook SDK: initialize natively to avoid startup race conditions
+    // (some devices/launch paths can call into AppEvents before JS runs).
+    try {
+      if (!FacebookSdk.isInitialized()) {
+        FacebookSdk.sdkInitialize(applicationContext)
+      }
+      FacebookSdk.fullyInitialize()
+      AppEventsLogger.activateApp(this)
+    } catch (_: Throwable) {
+      // no-op
+    }
 
     if (BuildConfig.TIKTOK_TT_APP_ID.isNotBlank() && BuildConfig.TIKTOK_APP_SECRET.isNotBlank()) {
       val ttConfig =

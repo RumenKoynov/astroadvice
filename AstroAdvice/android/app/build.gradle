@@ -92,8 +92,8 @@ android {
         applicationId "com.astroadvice"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 17
-        versionName "1.1.7"
+        versionCode 19
+        versionName "1.1.9"
 
         // Meta / Facebook SDK
         // Keep secrets out of git: set FACEBOOK_CLIENT_TOKEN in %USERPROFILE%\.gradle\gradle.properties (or CI env)
@@ -159,5 +159,8 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-common-java8:2.3.1'
     implementation 'com.android.installreferrer:installreferrer:2.2'
     implementation 'com.android.billingclient:billing:6.2.1'
+
+    // Ensure app has direct access to Facebook SDK classes for native initialization (MainApplication.kt)
+    implementation "com.facebook.android:facebook-android-sdk:${rootProject.ext.facebookSdkVersion}"
     
 }
