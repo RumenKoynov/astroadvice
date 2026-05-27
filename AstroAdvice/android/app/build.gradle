@@ -98,7 +98,7 @@ android {
         // Meta / Facebook SDK
         // Keep secrets out of git: set FACEBOOK_CLIENT_TOKEN in %USERPROFILE%\.gradle\gradle.properties (or CI env)
         def facebookClientToken = (project.findProperty("FACEBOOK_CLIENT_TOKEN") ?: "")
-        resValue "string", "facebook_client_token", "\"${facebookClientToken}\""
+        resValue "string", "facebook_client_token", "${facebookClientToken}"
         if (facebookClientToken.trim().isEmpty() && gradle.startParameter.taskNames.any { it.toLowerCase().contains("release") }) {
             throw new GradleException("Missing FACEBOOK_CLIENT_TOKEN. Set it in %USERPROFILE%\\.gradle\\gradle.properties or pass -PFACEBOOK_CLIENT_TOKEN=... when building release.")
         }
